@@ -1,4 +1,6 @@
-# Predição de catalisadores nanoestruturados para produção de hidrogênio verde via redes neurais de grafos equivariantes
+# AETHER (AI-Equivariant Tool for Hydrogen Evolution Research)
+
+### Predição de catalisadores nanoestruturados para produção de hidrogênio verde via redes neurais de grafos equivariantes
 
 Dissertação: predição de catalisadores de HER (Hydrogen Evolution Reaction).
 Etapa 1 = baseline Extra Trees sobre 10 features (réplica Wang et al., npj Comput.
