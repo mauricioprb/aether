@@ -9,7 +9,7 @@ import pandas as pd
 from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.model_selection import GridSearchCV, train_test_split
 
-from .features import FEATURE_NAMES
+from features import FEATURE_NAMES
 
 logger = logging.getLogger(__name__)
 

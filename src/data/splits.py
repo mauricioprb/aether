@@ -6,8 +6,8 @@ from pathlib import Path
 
 from sklearn.model_selection import train_test_split
 
-from ..baseline import RANDOM_STATE, TEST_SIZE
-from ..storage import load_features_frame
+from baseline import RANDOM_STATE, TEST_SIZE
+from storage import load_features_frame
 
 logger = logging.getLogger(__name__)
 

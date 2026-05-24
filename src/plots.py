@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from .baseline import BaselineResult
+from baseline import BaselineResult
 
 logger = logging.getLogger(__name__)
 

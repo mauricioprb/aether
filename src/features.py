@@ -32,7 +32,7 @@ import numpy as np
 from ase import Atoms
 from mendeleev import element
 
-from .geometry import (
+from geometry import (
     adsorbate_indices,
     central_indices,
     coordination_numbers,

@@ -9,10 +9,10 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from her_gnn.baseline import CV_FOLDS, PARAM_GRID, RANDOM_STATE, TEST_SIZE, run_baseline
-from her_gnn.plots import plot_dG_hist, plot_parity, plot_shap_bar
-from her_gnn.storage import load_features_frame
-from her_gnn.training.run_logger import RunLogger
+from baseline import CV_FOLDS, PARAM_GRID, RANDOM_STATE, TEST_SIZE, run_baseline
+from plots import plot_dG_hist, plot_parity, plot_shap_bar
+from storage import load_features_frame
+from training.run_logger import RunLogger
 
 logger = logging.getLogger("train")
 

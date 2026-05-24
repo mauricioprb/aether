@@ -20,7 +20,7 @@ import torch
 from ase import Atoms
 from ase.io import Trajectory
 
-from .features import FEATURE_NAMES
+from features import FEATURE_NAMES
 
 logger = logging.getLogger(__name__)
 

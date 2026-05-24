@@ -14,15 +14,15 @@ import logging
 
 import matplotlib.pyplot as plt
 
-from her_gnn.analysis.feature_eda import load_xy
-from her_gnn.analysis.feature_importance import (
+from analysis.feature_eda import load_xy
+from analysis.feature_importance import (
     fit_etr,
     rfecv_select,
     shap_importance,
 )
-from her_gnn.analysis.feature_reduction import compose_features, pca_reduce, select, top_k
-from her_gnn.training.evaluate import metrics_from_preds
-from her_gnn.training.run_logger import RunLogger
+from analysis.feature_reduction import compose_features, pca_reduce, select, top_k
+from training.evaluate import metrics_from_preds
+from training.run_logger import RunLogger
 
 logger = logging.getLogger("sweep")
 

@@ -9,7 +9,7 @@ from sklearn.feature_selection import RFECV
 from sklearn.inspection import permutation_importance
 from sklearn.model_selection import GridSearchCV
 
-from ..baseline import CV_FOLDS, PARAM_GRID, RANDOM_STATE
+from baseline import CV_FOLDS, PARAM_GRID, RANDOM_STATE
 
 logger = logging.getLogger(__name__)
 

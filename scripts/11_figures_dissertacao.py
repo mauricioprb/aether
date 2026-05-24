@@ -84,8 +84,8 @@ def _eval_stage_a() -> tuple[np.ndarray, np.ndarray]:
     """Quick inference of Stage A checkpoint on test set."""
     import torch
     from torch_geometric.loader import DataLoader
-    from her_gnn.data.mace_dataset import MACEDataset, three_way_split_mace
-    from her_gnn.models.mace_finetune import LitMACEFineTune
+    from data.mace_dataset import MACEDataset, three_way_split_mace
+    from models.mace_finetune import LitMACEFineTune
 
     ckpt = "logs/checkpoints/mace_ft_stageA/epoch=64-step=17160.ckpt"
     model = LitMACEFineTune.load_from_checkpoint(ckpt, mace_model="medium", mace_device="cuda")

@@ -15,9 +15,9 @@ import time
 import numpy as np
 import torch
 
-from her_gnn.training.evaluate import metrics_from_preds, parity_figure
-from her_gnn.training.run_logger import RunLogger
-from her_gnn.training.train import run_training
+from training.evaluate import metrics_from_preds, parity_figure
+from training.run_logger import RunLogger
+from training.train import run_training
 
 logger = logging.getLogger("schnet")
 

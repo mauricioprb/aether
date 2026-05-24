@@ -24,10 +24,10 @@ import numpy as np
 import torch
 from torch_geometric.loader import DataLoader
 
-from her_gnn.data.mace_dataset import MACEDataset, three_way_split_mace
-from her_gnn.models.mace_finetune import LitMACEFineTune
-from her_gnn.training.evaluate import metrics_from_preds, parity_figure
-from her_gnn.training.run_logger import RunLogger
+from data.mace_dataset import MACEDataset, three_way_split_mace
+from models.mace_finetune import LitMACEFineTune
+from training.evaluate import metrics_from_preds, parity_figure
+from training.run_logger import RunLogger
 
 logger = logging.getLogger("mace-finetune")
 

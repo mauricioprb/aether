@@ -9,9 +9,9 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from her_gnn.dataset import build_records
-from her_gnn.ingest import load_raw_dump
-from her_gnn.storage import write_lmdb, write_sqlite, write_traj
+from dataset import build_records
+from ingest import load_raw_dump
+from storage import write_lmdb, write_sqlite, write_traj
 
 logger = logging.getLogger("build")
 

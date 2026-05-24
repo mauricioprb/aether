@@ -18,8 +18,8 @@ from torch.utils.data import Dataset
 from torch_geometric.data import Data
 from tqdm import tqdm
 
-from ..data.splits import load_or_create_splits
-from ..geometry import adsorbate_indices, central_indices
+from data.splits import load_or_create_splits
+from geometry import adsorbate_indices, central_indices
 
 logger = logging.getLogger(__name__)
 

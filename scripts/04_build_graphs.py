@@ -11,8 +11,8 @@ from __future__ import annotations
 import argparse
 import logging
 
-from her_gnn.data.dataset import HERDataset
-from her_gnn.data.splits import load_or_create_splits
+from data.dataset import HERDataset
+from data.splits import load_or_create_splits
 
 logger = logging.getLogger("graphs")
 

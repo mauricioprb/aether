@@ -15,7 +15,7 @@ import logging
 
 from ase import Atoms
 
-from .geometry import central_indices, h_surface_min_distance, site_type
+from geometry import central_indices, h_surface_min_distance, site_type
 
 logger = logging.getLogger(__name__)
 

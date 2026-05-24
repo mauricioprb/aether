@@ -8,9 +8,9 @@ import numpy as np
 from ase.io import Trajectory
 from tqdm import tqdm
 
-from ..data.splits import load_or_create_splits
-from ..geometry import adsorbate_indices, central_indices
-from ..storage import assign_tags
+from data.splits import load_or_create_splits
+from geometry import adsorbate_indices, central_indices
+from storage import assign_tags
 
 logger = logging.getLogger(__name__)
 

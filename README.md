@@ -285,10 +285,11 @@ pico. SchNet com batch=32 fica < 1 GB de VRAM neste dataset.
 ## Estrutura
 
 ```
-src/her_gnn/   ingest, filters, features, geometry, storage, baseline, plots, dataset
+src/           ingest, filters, features, geometry, storage, baseline, plots, dataset
                data/ (graph_builder, dataset, splits, mace_dataset),
                models/ (schnet, mace_features, mace_finetune),
-               training/ (run_logger, train, evaluate)
+               training/ (run_logger, train, evaluate),
+               analysis/ (feature_eda, feature_importance, feature_reduction)
 notebooks/     01 explora, 02 filtros/features, 03 baseline, 04 grafos,
                07 mace smoke, 08 mace features EDA, 10 mace finetune smoke
 scripts/       01_download, 02_build_dataset, 03_train_baseline,

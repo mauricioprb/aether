@@ -7,7 +7,7 @@ import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
-from ..baseline import RANDOM_STATE
+from baseline import RANDOM_STATE
 
 
 def top_k(ranking: pd.Series, k: int) -> list[str]:

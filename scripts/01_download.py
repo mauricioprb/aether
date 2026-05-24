@@ -19,8 +19,8 @@ import json
 import logging
 from pathlib import Path
 
-from her_gnn.filters import passes_metadata_filters
-from her_gnn.ingest import fetch_all_metadata, fetch_reactions_by_ids, save_raw_dump
+from filters import passes_metadata_filters
+from ingest import fetch_all_metadata, fetch_reactions_by_ids, save_raw_dump
 
 logger = logging.getLogger("download")
 

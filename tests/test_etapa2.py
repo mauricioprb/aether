@@ -11,8 +11,8 @@ from ase.build import add_adsorbate, fcc111
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
-from her_gnn.data.graph_builder import atoms_to_graph  # noqa: E402
-from her_gnn.training.run_logger import RunLogger  # noqa: E402
+from data.graph_builder import atoms_to_graph  # noqa: E402
+from training.run_logger import RunLogger  # noqa: E402
 
 
 @pytest.fixture

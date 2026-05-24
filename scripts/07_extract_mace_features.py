@@ -19,13 +19,13 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from her_gnn.models.mace_features import (
+from models.mace_features import (
     FEATURE_NAMES,
     delta_g_map,
     extract_features,
     three_way_split,
 )
-from her_gnn.training.run_logger import RunLogger
+from training.run_logger import RunLogger
 
 logger = logging.getLogger("mace")
 

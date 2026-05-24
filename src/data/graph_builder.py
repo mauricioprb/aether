@@ -6,7 +6,7 @@ from ase import Atoms
 from ase.neighborlist import neighbor_list
 from torch_geometric.data import Data
 
-from ..storage import assign_tags
+from storage import assign_tags
 
 SLAB_PBC = (True, True, False)
 DEFAULT_CUTOFF = 6.0

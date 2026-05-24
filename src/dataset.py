@@ -6,9 +6,9 @@ from typing import Any
 
 from tqdm import tqdm
 
-from .features import compute_features
-from .filters import classify_site, is_clean_her, parse_coverage, passes_filters
-from .ingest import reaction_to_atoms
+from features import compute_features
+from filters import classify_site, is_clean_her, parse_coverage, passes_filters
+from ingest import reaction_to_atoms
 
 logger = logging.getLogger(__name__)
 

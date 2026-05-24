@@ -10,9 +10,9 @@ from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
 from torch_geometric.loader import DataLoader
 
-from ..data.dataset import HERDataset
-from ..data.splits import load_or_create_splits
-from ..models.schnet import LitSchNet
+from data.dataset import HERDataset
+from data.splits import load_or_create_splits
+from models.schnet import LitSchNet
 
 logger = logging.getLogger(__name__)
 

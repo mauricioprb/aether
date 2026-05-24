@@ -7,7 +7,7 @@ from ase.io import Trajectory
 from torch_geometric.data import InMemoryDataset
 from tqdm import tqdm
 
-from .graph_builder import DEFAULT_CUTOFF, atoms_to_graph
+from data.graph_builder import DEFAULT_CUTOFF, atoms_to_graph
 
 logger = logging.getLogger(__name__)
 

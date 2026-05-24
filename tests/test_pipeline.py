@@ -7,16 +7,16 @@ import math
 import pytest
 from ase.build import add_adsorbate, fcc111
 
-from her_gnn.features import FEATURE_NAMES, compute_features, geometric_mean
-from her_gnn.filters import classify_site, passes_filters
-from her_gnn.geometry import (
+from features import FEATURE_NAMES, compute_features, geometric_mean
+from filters import classify_site, passes_filters
+from geometry import (
     central_indices,
     coordination_numbers,
     h_surface_min_distance,
     neighbor_indices,
     site_type,
 )
-from her_gnn.storage import assign_tags
+from storage import assign_tags
 
 
 @pytest.fixture
