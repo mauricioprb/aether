@@ -93,6 +93,92 @@ Toda métrica fica em `results/runs/{timestamp}_{name}/`:
 Agregada em `results/summary.json`. Multi-seed sumarizado em
 `results/multiseed_summary.md` (mean ± std + per-seed tabela).
 
+## Screening de catalisadores (recomendação)
+
+Filtra os 5860 catalisadores curados por composição, prediz ΔG_H, ranqueia
+por |ΔG_H_pred| (Sabatier: ótimo HER tem ΔG_H ≈ 0).
+
+```bash
+# Top 10 contendo Pt E Ni, ETR + MACE emb (CPU, ~30s)
+python scripts/14_screen.py --elements Pt Ni --top 10
+
+# Top 50 contendo Pd, MACE Stage A (GPU)
+python scripts/14_screen.py --elements Pd --top 50 --model stagea
+
+# Ensemble ETR + Stage A
+python scripts/14_screen.py --elements Cu --top 20 --model ensemble \
+    --output results/screen_Cu.csv
+
+# --exclude-train: restringe ao test canônico (1172 IDs) pra evitar
+# top picks com dG_pred = dG_dft (ETR memoriza train data)
+python scripts/14_screen.py --elements Pt --top 10 --exclude-train
+
+# Via Makefile (defaults: ELEMENTS="Pt Ni" TOP=10 MODEL=etr_emb)
+make screen ELEMENTS="Pt Au" TOP=20 MODEL=etr_emb
+```
+
+Saída: tabela com `chemical_formula`, `facet`, `site_type`, `dG_pred`,
+`delta_G_H` (DFT real), `abs_dG_pred`, `error_vs_dft`, `id`.
+
+Filtro `--elements E1 E2 ...`: retorna estruturas que contêm **todos** os
+metais informados (pode ter outros). H é sempre adsorbato, ignorado no filtro.
+
+## REST API
+
+FastAPI service expõe o screening como HTTP. Documentação OpenAPI auto em
+`/docs` (Swagger) e `/redoc`.
+
+```bash
+make api-dev               # auto-reload, dev. http://localhost:8000/docs
+make api                   # production mode
+```
+
+### Endpoints
+
+| Método | Rota | Descrição |
+|---|---|---|
+| GET | `/` | metadata da API |
+| GET | `/stats` | n_structures, n_test, elementos + modelos disponíveis |
+| GET | `/elements` | lista de metais |
+| POST | `/screen` | top-N catalisadores ranqueados |
+| GET | `/screen?elements=Pt&top=10&model=etr_emb` | mesmo, GET browser-friendly |
+
+### Exemplo POST
+
+```bash
+curl -X POST http://localhost:8000/screen \
+  -H "Content-Type: application/json" \
+  -d '{"elements":["Pt","Ni"],"top":5,"model":"etr_emb","exclude_train":true}'
+```
+
+Retorno JSON:
+```json
+{
+  "elements": ["Ni", "Pt"],
+  "model": "etr_emb",
+  "n_candidates": 24,
+  "rows": [
+    {"chemical_formula": "...", "dG_pred": 0.001, "abs_dG_pred": 0.001, ...}
+  ]
+}
+```
+
+Backend (`src/screening.py`) cacheia modelos em 2 níveis:
+- **Disco** (`data/model_cache/etr_emb.pkl`): ETR treinado 1x, reutilizado entre processos.
+  Fingerprint por SHA-1 dos embeddings → invalida automaticamente se mudarem.
+- **Processo** (`lru_cache`): modelo carregado 1x por processo, sem disk hit por request.
+
+Custos por modelo (sem cache → com pickle):
+
+| Modelo | 1ª request | Requests subsequentes | GPU obrigatória? |
+| --- | --- | --- | --- |
+| `etr_emb` | ~16s (fit + save) → ~2s (load pkl) | ~10ms | NÃO (sklearn CPU) |
+| `stagea` | ~5s (load ckpt) | CPU ~1s/struct • GPU ~25ms/struct | NÃO mas 40× mais rápido |
+| `ensemble` | soma dos 2 | soma dos 2 | depende do `stagea` |
+
+Pra deploy CPU-only (HuggingFace Spaces grátis, VPS barato): usar `etr_emb` como
+default. `stagea` opcional pra cross-check.
+
 ## Pacote de métricas unificado
 
 Todo modelo reporta o mesmo conjunto via `training.evaluate.metrics_from_preds`:

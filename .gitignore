@@ -24,6 +24,7 @@ data/figures/*
 data/metadata.sqlite
 data/splits.json
 data/mace_features/
+data/model_cache/
 !data/**/.gitkeep
 
 # Training logs / checkpoints (regenerated, huge)

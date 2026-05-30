@@ -65,6 +65,26 @@ figures:                    ## Generate dissertation figures (fig1-5).
 
 report: aggregate compare figures ## Run all reporting steps in order.
 
+# ── Screening (catalyst recommendation) ──────────────────────────────────────
+screen-help:                ## Show screen.py usage.
+	$(PY) scripts/14_screen.py --help
+
+# Example: make screen ELEMENTS="Pt Ni" TOP=10 MODEL=etr_emb
+ELEMENTS ?= Pt Ni
+TOP ?= 10
+MODEL ?= etr_emb
+screen:                     ## Rank catalysts by |ΔG_H_pred|. Vars: ELEMENTS, TOP, MODEL.
+	$(PY) scripts/14_screen.py --elements $(ELEMENTS) --top $(TOP) --model $(MODEL)
+
+# ── REST API ─────────────────────────────────────────────────────────────────
+API_HOST ?= 0.0.0.0
+API_PORT ?= 8000
+api-dev:                    ## Run REST API in dev mode (auto-reload). Open http://localhost:$(API_PORT)/docs
+	.venv/bin/uvicorn app.api:app --host $(API_HOST) --port $(API_PORT) --reload
+
+api:                        ## Run REST API in production mode.
+	.venv/bin/uvicorn app.api:app --host $(API_HOST) --port $(API_PORT) --workers 1
+
 # ── End-to-end ───────────────────────────────────────────────────────────────
 pipeline: etr-baseline emb-sweep schnet-multiseed stagea-multiseed report ## Full pipeline (GPU, ~6 h).
 
@@ -76,4 +96,5 @@ clean-results:              ## Remove all run dirs (KEEPS summary + tables + fig
 
 .PHONY: help data-download data-build graphs etr-baseline schnet-multiseed \
          mace-features mace-embeddings stagea-multiseed emb-sweep aggregate \
-         compare figures report pipeline clean-checkpoints clean-results
+         compare figures report pipeline screen screen-help api api-dev \
+         clean-checkpoints clean-results
