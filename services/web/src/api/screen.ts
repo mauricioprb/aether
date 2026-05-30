@@ -1,5 +1,11 @@
 import { http } from './client'
-import type { ScreenRequest, ScreenResponse, StatsResponse } from './types'
+import type {
+  ComparisonPredictionsResponse,
+  ComparisonResponse,
+  ScreenRequest,
+  ScreenResponse,
+  StatsResponse,
+} from './types'
 
 export async function fetchStats(): Promise<StatsResponse> {
   const { data } = await http.get<StatsResponse>('/stats')
@@ -13,5 +19,15 @@ export async function fetchElements(): Promise<string[]> {
 
 export async function runScreen(req: ScreenRequest): Promise<ScreenResponse> {
   const { data } = await http.post<ScreenResponse>('/screen', req)
+  return data
+}
+
+export async function fetchComparison(): Promise<ComparisonResponse> {
+  const { data } = await http.get<ComparisonResponse>('/comparison')
+  return data
+}
+
+export async function fetchComparisonPredictions(): Promise<ComparisonPredictionsResponse> {
+  const { data } = await http.get<ComparisonPredictionsResponse>('/comparison/predictions')
   return data
 }

@@ -13,6 +13,9 @@ from screening import (
     screen,
 )
 
+from analysis.comparison import CHEM_ACCURACY_EV, load_whitelist
+from analysis.multiseed import DEFAULT_GROUPS, aggregate_groups
+
 logger = logging.getLogger("api")
 logging.basicConfig(level=logging.INFO,
                      format="%(asctime)s %(levelname)s %(name)s: %(message)s",
@@ -76,6 +79,52 @@ class StatsResponse(BaseModel):
     available_models: list[str]
 
 
+class ModelComparisonRow(BaseModel):
+    display: str
+    color: str
+    kind: Literal["baseline", "gnn", "hybrid"]
+    is_multiseed: bool
+    n_seeds: int | None = None
+    r2_test: float
+    r2_test_std: float | None = None
+    mae_test: float
+    mae_test_std: float | None = None
+    mae_meV_test: float
+    rmse_test: float
+    mdae_test: float | None = None
+    pearson_r_test: float | None = None
+    spearman_rho_test: float | None = None
+    frac_chem_acc_test: float | None = None
+    n_params: int | None = None
+    elapsed_sec: float | None = None
+    run_dir: str
+
+
+class ComparisonResponse(BaseModel):
+    models: list[ModelComparisonRow]
+    chemical_accuracy_eV: float = CHEM_ACCURACY_EV
+
+
+class ModelPredictions(BaseModel):
+    display: str
+    color: str
+    y_true: list[float]
+    y_pred: list[float]
+
+
+class ComparisonPredictionsResponse(BaseModel):
+    models: list[ModelPredictions]
+    chemical_accuracy_eV: float = CHEM_ACCURACY_EV
+
+
+KIND_BY_NAME: dict[str, Literal["baseline", "gnn", "hybrid"]] = {
+    "etr_baseline": "baseline",
+    "schnet_v2_seed2": "gnn",
+    "mace_ft_stageA_v2_seed3": "gnn",
+    "etr_emb_all": "hybrid",
+}
+
+
 @app.get("/", summary="API root", tags=["meta"])
 def root():
     return {
@@ -104,6 +153,62 @@ def stats():
 def elements():
     """List metal element symbols present in the dataset."""
     return {"elements": available_elements()}
+
+
+@app.get("/comparison/predictions", response_model=ComparisonPredictionsResponse,
+          tags=["meta"])
+def comparison_predictions():
+    """Raw test-set predictions for the 4 whitelist models — for client-side charting
+    (parity, residual histogram, cumulative error). ~600 KB JSON."""
+    runs = load_whitelist()
+    return ComparisonPredictionsResponse(
+        models=[
+            ModelPredictions(
+                display=r.display,
+                color=r.color,
+                y_true=r.preds["y_true"].astype(float).tolist(),
+                y_pred=r.preds["y_pred"].astype(float).tolist(),
+            )
+            for r in runs
+        ]
+    )
+
+
+@app.get("/comparison", response_model=ComparisonResponse, tags=["meta"])
+def comparison():
+    """Whitelisted models with multi-seed mean ± std when applicable."""
+    runs = load_whitelist()
+    multiseed_index = {g.group: g for g in aggregate_groups(DEFAULT_GROUPS)}
+    rows: list[ModelComparisonRow] = []
+    for r in runs:
+        ms = r.multiseed_stats
+        entry = r.entry
+        ms_group = multiseed_index.get(entry.get("name", "").rsplit("_seed", 1)[0])
+        means = ms_group.means if ms_group else None
+        stds = ms_group.stds if ms_group else None
+        r2 = (means or {}).get("r2_test", entry.get("r2_test", 0.0))
+        mae = (means or {}).get("mae_test", entry.get("mae_test", 0.0))
+        rows.append(ModelComparisonRow(
+            display=r.display,
+            color=r.color,
+            kind=KIND_BY_NAME.get(entry.get("name", ""), "hybrid"),
+            is_multiseed=bool(ms),
+            n_seeds=ms["n"] if ms else None,
+            r2_test=r2,
+            r2_test_std=(stds or {}).get("r2_test") if ms else None,
+            mae_test=mae,
+            mae_test_std=(stds or {}).get("mae_test") if ms else None,
+            mae_meV_test=mae * 1000.0,
+            rmse_test=(means or {}).get("rmse_test", entry.get("rmse_test", 0.0)),
+            mdae_test=(means or {}).get("mdae_test", entry.get("mdae_test")),
+            pearson_r_test=(means or {}).get("pearson_r_test", entry.get("pearson_r_test")),
+            spearman_rho_test=(means or {}).get("spearman_rho_test", entry.get("spearman_rho_test")),
+            frac_chem_acc_test=(means or {}).get("frac_chem_acc_test", entry.get("frac_chem_acc_test")),
+            n_params=entry.get("n_params"),
+            elapsed_sec=entry.get("elapsed_sec"),
+            run_dir=entry.get("run_dir", ""),
+        ))
+    return ComparisonResponse(models=rows)
 
 
 @app.post("/screen", response_model=ScreenResponse, tags=["screen"])

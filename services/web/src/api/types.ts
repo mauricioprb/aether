@@ -38,6 +38,46 @@ export interface StatsResponse {
   available_models: string[]
 }
 
+export type ModelKind = 'baseline' | 'gnn' | 'hybrid'
+
+export interface ModelComparisonRow {
+  display: string
+  color: string
+  kind: ModelKind
+  is_multiseed: boolean
+  n_seeds: number | null
+  r2_test: number
+  r2_test_std: number | null
+  mae_test: number
+  mae_test_std: number | null
+  mae_meV_test: number
+  rmse_test: number
+  mdae_test: number | null
+  pearson_r_test: number | null
+  spearman_rho_test: number | null
+  frac_chem_acc_test: number | null
+  n_params: number | null
+  elapsed_sec: number | null
+  run_dir: string
+}
+
+export interface ComparisonResponse {
+  models: ModelComparisonRow[]
+  chemical_accuracy_eV: number
+}
+
+export interface ModelPredictions {
+  display: string
+  color: string
+  y_true: number[]
+  y_pred: number[]
+}
+
+export interface ComparisonPredictionsResponse {
+  models: ModelPredictions[]
+  chemical_accuracy_eV: number
+}
+
 export interface ApiError {
   status: number
   message: string
