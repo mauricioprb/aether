@@ -37,6 +37,9 @@ RUN uv sync --no-install-project --frozen && \
 COPY src/ ./src/
 COPY services/api/ ./services/api/
 
+RUN useradd --create-home --uid 1000 app && chown -R app:app /app
+USER app
+
 EXPOSE 8000
 
 CMD [".venv/bin/uvicorn", "--app-dir", "services/api", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

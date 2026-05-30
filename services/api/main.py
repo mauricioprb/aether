@@ -33,7 +33,7 @@ app = FastAPI(
 
 
 class ScreenRequest(BaseModel):
-    elements: list[str] = Field(..., min_length=1,
+    elements: list[str] = Field(..., min_length=1, max_length=20,
                                   description="Required metal elements (e.g. ['Pt', 'Ni'])",
                                   examples=[["Pt", "Ni"]])
     top: int = Field(default=10, ge=1, le=500,
@@ -226,7 +226,7 @@ def screen_endpoint(req: ScreenRequest):
 
 @app.get("/screen", response_model=ScreenResponse, tags=["screen"])
 def screen_get(
-    elements: list[str] = Query(..., min_length=1,
+    elements: list[str] = Query(..., min_length=1, max_length=20,
                                   description="Required metals (repeatable: ?elements=Pt&elements=Ni)"),
     top: int = Query(10, ge=1, le=500),
     model: Literal["etr_emb", "stagea", "ensemble"] = Query("etr_emb"),

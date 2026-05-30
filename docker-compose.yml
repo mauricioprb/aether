@@ -8,8 +8,6 @@ services:
     restart: unless-stopped
     expose:
       - "8000"
-    ports:
-      - "${API_PORT:-8000}:8000"
     volumes:
       - ./data:/app/data:ro
       - ./logs/checkpoints:/app/logs/checkpoints:ro
@@ -19,7 +17,11 @@ services:
       - PYTHONUNBUFFERED=1
       - PYTHONPATH=/app/src
     healthcheck:
-      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8000/stats\")'"]
+      test:
+        [
+          "CMD-SHELL",
+          'python -c ''import urllib.request; urllib.request.urlopen("http://localhost:8000/stats")''',
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -37,7 +39,7 @@ services:
     container_name: aether-web
     restart: unless-stopped
     ports:
-      - "${WEB_PORT:-5173}:80"
+      - "${WEB_BIND:-127.0.0.1}:${WEB_PORT:-5173}:80"
     depends_on:
       api:
         condition: service_healthy
