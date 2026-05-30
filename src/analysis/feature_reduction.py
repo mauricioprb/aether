@@ -29,7 +29,7 @@ def pca_reduce(X_train, X_test, var: float):
 
 def compose_features(X: np.ndarray, names: list[str], base: list[str]) -> tuple[np.ndarray, list[str]]:
     """Derived features from the most important base features: ratios, products,
-    squares (analogy to the paper's composite phi = Nd0^2 / psi0)."""
+    squares (analogy to the composite phi = Nd0^2 / psi0)."""
     cols = {n: X[:, names.index(n)] for n in base}
     new_cols, new_names = [], []
     for a in base:

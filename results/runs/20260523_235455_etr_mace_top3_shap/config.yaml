@@ -1,7 +1,0 @@
-model: ExtraTreesRegressor
-strategy: top3_shap
-n_features: 3
-features:
-- mace_E_H
-- mace_E_neighbors_mean
-- mace_E_neighbors_min

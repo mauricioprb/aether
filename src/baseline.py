@@ -41,15 +41,10 @@ class BaselineResult:
 
 
 def metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, float]:
-    from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+    """Delegate to the unified metric pack so every model reports the same keys."""
+    from training.evaluate import metrics_from_preds
 
-    mse = float(mean_squared_error(y_true, y_pred))
-    return {
-        "R2": float(r2_score(y_true, y_pred)),
-        "MAE": float(mean_absolute_error(y_true, y_pred)),
-        "MSE": mse,
-        "RMSE": float(np.sqrt(mse)),
-    }
+    return metrics_from_preds(y_true, y_pred)
 
 
 def run_baseline(df: pd.DataFrame, features: list[str] | None = None,

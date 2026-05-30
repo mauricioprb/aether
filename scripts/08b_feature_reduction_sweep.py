@@ -32,7 +32,7 @@ FIG_PATH = "results/figures/feature_reduction_sweep.png"
 
 
 def evaluate_strategy(prefix, tag, X_train, y_train, X_test, y_test, n_features,
-                      feature_list, grid=None):
+                      feature_list, test_ids, grid=None, color="#55a868"):
     model = fit_etr(X_train, y_train, grid)
     pred = model.predict(X_test)
     m = metrics_from_preds(y_test, pred)
@@ -43,7 +43,9 @@ def evaluate_strategy(prefix, tag, X_train, y_train, X_test, y_test, n_features,
               "n_features": n_features, "features": feature_list}
     with RunLogger(name=f"{prefix}_{tag}", config=config) as run:
         run.log_metrics({f"{k}_test": v for k, v in m.items()} | {"n_features": n_features})
-        run.log_predictions(y_test, pred, "test")
+        run.log_predictions(y_test, pred, "test", sid=test_ids)
+        run.log_standard_figures(y_test, pred,
+                                  model_label=f"{prefix} {tag}", color=color)
     return n_features, m["r2"]
 
 
@@ -66,8 +68,10 @@ def main() -> None:
         grid = {"n_estimators": [300], "max_depth": [None, 20], "min_samples_leaf": [1]}
         do_rfe, do_compose = False, False
 
-    X_train, y_train, X_test, y_test, names = load_xy(suffix=suffix)
+    X_train, y_train, X_test, y_test, names, test_ids, train_ids = load_xy(suffix=suffix)
     logger.info("%s: train=%d test=%d, %d features", prefix, len(X_train), len(X_test), len(names))
+
+    color = "#55a868" if suffix == "_emb" else "#dd8452"
 
     full = fit_etr(X_train, y_train, grid)
     ranking, _ = shap_importance(full, X_test, names)
@@ -78,7 +82,8 @@ def main() -> None:
     m = metrics_from_preds(y_test, pred)
     with RunLogger(name=f"{prefix}_all", config={"strategy": "all", "n_features": len(names)}) as run:
         run.log_metrics({f"{k}_test": v for k, v in m.items()} | {"n_features": len(names)})
-        run.log_predictions(y_test, pred, "test")
+        run.log_predictions(y_test, pred, "test", sid=test_ids)
+        run.log_standard_figures(y_test, pred, model_label=f"{prefix} all", color=color)
     results["all"] = (len(names), m["r2"])
     logger.info("[all] n=%d R2=%.4f", len(names), m["r2"])
 
@@ -86,25 +91,29 @@ def main() -> None:
         chosen = top_k(ranking, k)
         results[f"top{k}"] = evaluate_strategy(prefix, f"top{k}",
             select(X_train, names, chosen), y_train,
-            select(X_test, names, chosen), y_test, k, chosen, grid)
+            select(X_test, names, chosen), y_test, k, chosen,
+            test_ids=test_ids, grid=grid, color=color)
 
     for var, tag in [(0.90, "pca90"), (0.95, "pca95"), (0.99, "pca99")]:
         Xtr, Xte, nc = pca_reduce(X_train, X_test, var)
         results[tag] = evaluate_strategy(prefix, tag, Xtr, y_train, Xte, y_test, nc,
-                                         [f"PC{i+1}" for i in range(nc)], grid)
+                                         [f"PC{i+1}" for i in range(nc)],
+                                         test_ids=test_ids, grid=grid, color=color)
 
     if do_rfe:
         _, rfe_sel = rfecv_select(X_train, y_train, names)
         results["rfe"] = evaluate_strategy(prefix, "rfe",
             select(X_train, names, rfe_sel), y_train,
-            select(X_test, names, rfe_sel), y_test, len(rfe_sel), rfe_sel, grid)
+            select(X_test, names, rfe_sel), y_test, len(rfe_sel), rfe_sel,
+            test_ids=test_ids, grid=grid, color=color)
 
     if do_compose:
         base = top_k(ranking, 3)
         Xtr_c, comp_names = compose_features(X_train, names, base)
         Xte_c, _ = compose_features(X_test, names, base)
         results["compose"] = evaluate_strategy(prefix, "compose", Xtr_c, y_train, Xte_c, y_test,
-                                               len(comp_names), comp_names, grid)
+                                               len(comp_names), comp_names,
+                                               test_ids=test_ids, grid=grid, color=color)
 
     _plot(results, fig)
     logger.info("sweep done: %d strategies -> %s", len(results), fig)

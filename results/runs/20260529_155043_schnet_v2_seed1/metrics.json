@@ -1,0 +1,16 @@
+{
+  "r2_test": 0.9703127542084155,
+  "mae_test": 0.06428921088918411,
+  "rmse_test": 0.10800034284770019,
+  "mdae_test": 0.04254574328660965,
+  "max_err_test": 1.57601797580719,
+  "pearson_r_test": 0.9851212872114066,
+  "spearman_rho_test": 0.986676558340494,
+  "smape_test": 0.2383108447857014,
+  "mae_meV_test": 64.28921088918412,
+  "frac_chem_acc_test": 0.5034129692832765,
+  "n_params": 455809,
+  "vram_peak_gb": 0.346,
+  "best_ckpt": "/home/mauricio/repositorios/her-gnn/logs/checkpoints/schnet_v2_seed1/epoch=79-step=10560.ckpt",
+  "elapsed_sec": 677.35
+}

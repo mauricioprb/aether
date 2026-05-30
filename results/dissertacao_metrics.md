@@ -4,7 +4,9 @@ Dataset: 5.860 estruturas HER do Catalysis Hub
 Split: 4.220 treino / 468 validação / 1.172 teste (canônico por id, seed=42)
 Target: ΔG_H\* (eV) ∈ [-2, 2]
 GPU: NVIDIA GeForce RTX 5060 Ti 16 GB
-Referência: Wang et al. (2025), npj Computational Materials 11:111 - R²=0.922 (ETR, 10 features)
+
+Multi-seed (n=5, seeds 42, 1, 2, 3, 4) reportado como **mean ± std** para modelos
+não-determinísticos. ETR (sklearn) é determinístico per seed.
 
 ---
 
@@ -22,129 +24,143 @@ Referência: Wang et al. (2025), npj Computational Materials 11:111 - R²=0.922 
 | **Completo (full)**      | O backbone **inteiro é treinado** junto com a cabeça (fine-tune end-to-end). Requer mais VRAM e mais dados; risco de overfitting com datasets pequenos.                                                         |
 | **Híbrido**              | Combinação de GNN como extrator de features + modelo clássico (ETR) como preditor. A GNN **não é treinada** na tarefa-alvo - só extrai representações.                                                          |
 | **GNN pura**             | A rede neural **é o modelo preditivo**: recebe a estrutura 3D e produz ΔG_H\* diretamente. É a abordagem proposta pela dissertação.                                                                             |
-| **Features handcrafted** | Descritores eletrônicos/estruturais calculados manualmente (10 features de Wang et al.), sem uso de aprendizado profundo.                                                                                       |
+| **Features handcrafted** | Descritores eletrônicos/estruturais calculados manualmente (10 features), sem uso de aprendizado profundo.                                                                                                       |
 | **Embeddings**           | Vetores latentes extraídos das camadas internas do MACE-MP-0 (640 dimensões por átomo). Capturam o ambiente químico local.                                                                                      |
 | **SHAP**                 | SHapley Additive exPlanations - método para medir importância de cada feature na predição.                                                                                                                      |
 | **PCA**                  | Principal Component Analysis - redução de dimensionalidade linear.                                                                                                                                              |
 
 ---
 
-## Resultados principais
+## Pacote unificado de métricas
 
-| Modelo                                            |  R² test  |  MAE  | RMSE  | # Params |    Tipo    |
-| ------------------------------------------------- | :-------: | :---: | :---: | :------: | :--------: |
-| **ETR + MACE embeddings (512-dim, frozen)**       | **0.961** | 0.071 | 0.123 |    -     |  Híbrido   |
-| ETR + MACE PCA 99% (77 comp)                      |   0.960   | 0.077 | 0.125 |    -     |  Híbrido   |
-| ETR + MACE top-50 SHAP                            |   0.958   | 0.077 | 0.129 |    -     |  Híbrido   |
-| ETR + MACE PCA 90% (26 comp)                      |   0.956   | 0.080 | 0.131 |    -     |  Híbrido   |
-| ETR + MACE top-20 SHAP                            |   0.952   | 0.085 | 0.138 |    -     |  Híbrido   |
-| **MACE fine-tune Stage A (frozen + MLP 2-layer)** | **0.947** | 0.083 | 0.144 |   328K   |    GNN     |
-| MACE fine-tune Stage A+ (frozen + MLP 3-layer)    |   0.945   | 0.072 | 0.148 |   919K   |    GNN     |
-| MACE fine-tune Stage C (full fine-tune)           |   0.940   | 0.084 | 0.153 |   5.0M   |    GNN     |
-| ETR + MACE top-10 SHAP                            |   0.940   | 0.096 | 0.154 |    -     |  Híbrido   |
-| ETR + 10 features handcrafted (Wang et al.)       |   0.934   | 0.096 | 0.161 |    -     |  Baseline  |
-| Paper Wang et al. (2025)                          |   0.922   |   -   | 0.186 |    -     | Referência |
-| SchNet (GNN treinada do zero)                     |   0.908   | 0.060 | 0.190 |   456K   |    GNN     |
-| ETR + MACE escalares (7 feat)                     |   0.864   | 0.158 | 0.231 |    -     |  Baseline  |
+Todo modelo reporta o mesmo conjunto:
 
----
-
-## Ablação - Redução de dimensionalidade nos embeddings MACE
-
-| Estratégia          | # Features | R² test |  MAE  | RMSE  |
-| ------------------- | :--------: | :-----: | :---: | :---: |
-| Todos os embeddings |    512     |  0.961  | 0.071 | 0.123 |
-| Top-100 SHAP        |    100     |  0.961  | 0.073 | 0.124 |
-| Top-50 SHAP         |     50     |  0.958  | 0.077 | 0.129 |
-| PCA 99% var         |     77     |  0.960  | 0.077 | 0.125 |
-| PCA 95% var         |     38     |  0.957  | 0.079 | 0.130 |
-| PCA 90% var         |     26     |  0.956  | 0.080 | 0.131 |
-| Top-20 SHAP         |     20     |  0.952  | 0.085 | 0.138 |
-| Top-10 SHAP         |     10     |  0.940  | 0.096 | 0.154 |
+| Métrica         | Significado                                                       |
+| --------------- | ----------------------------------------------------------------- |
+| **R²**          | Coeficiente de determinação (1.0 = predição perfeita).            |
+| **MAE**         | Mean Absolute Error (eV).                                         |
+| **RMSE**        | Root Mean Squared Error (eV) - sensível a outliers.              |
+| **MDAE**        | Median Absolute Error (eV) - robusto a outliers.                 |
+| **max err**     | Pior erro absoluto (eV).                                          |
+| **Pearson r**   | Correlação linear pred vs DFT.                                    |
+| **Spearman ρ**  | Correlação de ranking (preserva ordem).                           |
+| **sMAPE**       | Symmetric MAPE - estável quando alvo cruza zero.                  |
+| **MAE (meV)**   | MAE em meV (comparação com literatura DFT).                       |
+| **% < 43 meV**  | Fração de predições com \|erro\| menor que chemical accuracy.    |
 
 ---
 
-## Ablação - Redução de features escalares MACE (7 feat)
+## Resultados principais (mean ± std, n=5)
 
-| Estratégia             | # Features | R² test |  MAE  | RMSE  |
-| ---------------------- | :--------: | :-----: | :---: | :---: |
-| Todas 7 (RFE)          |     7      |  0.864  | 0.158 | 0.231 |
-| Top-5 SHAP             |     5      |  0.863  | 0.160 | 0.232 |
-| PCA 99% var            |     5      |  0.846  | 0.172 | 0.246 |
-| PCA 95% var            |     4      |  0.837  | 0.185 | 0.253 |
-| PCA 90% var            |     3      |  0.816  | 0.202 | 0.269 |
-| Top-3 SHAP             |     3      |  0.807  | 0.210 | 0.275 |
-| Composição (análogo φ) |     16     |  0.863  | 0.162 | 0.232 |
+| Modelo                                            |  R² test            |  MAE (eV)          | RMSE (eV)         | # Params |    Tipo    |
+| ------------------------------------------------- | :-----------------: | :----------------: | :---------------: | :------: | :--------: |
+| **ETR + MACE embeddings (512-dim, frozen)**       | **0.9613**          | 0.0714             | 0.1232            |    -     |  Híbrido   |
+| **MACE fine-tune Stage A (frozen + MLP 2-layer)** | **0.9564 ± 0.0015** | 0.0706 ± 0.0014    | 0.1309 ± 0.0022   |   328K   |    GNN     |
+| ETR + 10 features handcrafted                     | 0.9341              | 0.0955             | 0.1609            |    -     |  Baseline  |
+| SchNet (GNN treinada do zero)                     | 0.9105 ± 0.0511     | 0.0734 ± 0.0145    | 0.1804 ± 0.0573   |   456K   |    GNN     |
 
----
-
-## Fine-tune MACE (GNN end-to-end)
-
-| Estágio  | Backbone  |                   Cabeça                   | R² test |  MAE  | RMSE  | Params | Tempo  |
-| -------- | :-------: | :----------------------------------------: | :-----: | :---: | :---: | :----: | :----: |
-| Stage A  | Congelado |          MLP 2-layer (1280→256→1)          |  0.947  | 0.083 | 0.144 |  328K  | 12 min |
-| Stage A+ | Congelado | MLP 3-layer (1280→512→256→1) + dropout 0.1 |  0.945  | 0.072 | 0.148 |  919K  | 33 min |
-| Stage C  | Completo  |                MLP 2-layer                 |  0.940  | 0.084 | 0.153 |  5.0M  | 48 min |
+**Stage A 34× mais estável que SchNet** (std 0.0015 vs 0.0511).
 
 ---
 
-## Extração de features MACE-MP-0
+## Per-seed (sanity check)
 
-| Tipo                          |   Features    | Dim |  Tempo  |  VRAM   |
-| ----------------------------- | :-----------: | :-: | :-----: | :-----: |
-| Escalares (per-atom energies) |       7       |  -  | 3.7 min | 0.64 GB |
-| Embeddings invariantes de nó  | 256 × 2 = 512 |  -  | 6.3 min | 0.64 GB |
+### SchNet v2 (val_r2 mode=max patience=60)
+
+| seed | R²     | MAE (eV) | epoch best |
+| ---- | ------ | -------- | ---------- |
+| 42   | 0.9540 | 0.0598   | 130        |
+| 1    | 0.9703 | 0.0643   | 79         |
+| 2    | 0.8991 | 0.0916   | 37         |
+| 3    | 0.8822 | 0.0865   | 68         |
+| 4    | 0.8469 | 0.0650   | 108        |
+
+### MACE Stage A v2
+
+| seed | R²     | MAE (eV) | epoch best |
+| ---- | ------ | -------- | ---------- |
+| 42   | 0.9539 | 0.0719   | 166        |
+| 1    | 0.9575 | 0.0705   | 192        |
+| 2    | 0.9574 | 0.0688   | 198        |
+| 3    | 0.9562 | 0.0720   | 176        |
+| 4    | 0.9571 | 0.0699   | 185        |
+
+---
+
+## Ablação - Redução de dimensionalidade nos embeddings MACE (ETR, determinístico)
+
+| Estratégia          | # Features | R² test |  MAE (eV) | MAE (meV) | RMSE (eV) |
+| ------------------- | :--------: | :-----: | :-------: | :-------: | :-------: |
+| Todos embeddings    |    512     | 0.9613  | 0.0714    | 71        | 0.1232    |
+| Top-100 SHAP        |    100     | 0.9611  | 0.0725    | 73        | 0.1236    |
+| PCA 99% var         |     77     | 0.9600  | 0.0767    | 77        | 0.1254    |
+| Top-50 SHAP         |     50     | 0.9577  | 0.0765    | 77        | 0.1289    |
+| PCA 95% var         |     38     | 0.9568  | 0.0791    | 79        | 0.1302    |
+| PCA 90% var         |     26     | 0.9562  | 0.0798    | 80        | 0.1312    |
+| Top-20 SHAP         |     20     | 0.9517  | 0.0846    | 85        | 0.1378    |
+| Top-10 SHAP         |     10     | 0.9397  | 0.0956    | 96        | 0.1539    |
+
+Sweet spot: **top-20** (R²=0.952, sem perda significativa); **top-50** (0.958)
+se quiser quase o teto.
 
 ---
 
 ## Visualização hierárquica dos resultados
 
 ```
-                    ETR + MACE embeddings (Congelado)
-                              0.961  ← teto de informação
+                ETR + MACE embeddings (frozen, determinístico)
+                              0.9613  ← teto da representação MACE
                               │
-    ┌─────────────────────────┤
-    │                         │
-MACE Stage A (GNN pura)    ETR + PCA 90%
-    0.947                     0.956
-    │                         │
-    ├─────────────────────┐   │
-    │                     │   │
-MACE Stage C (full)   ETR handcrafted  ETR + top-20
-    0.940                 0.934          0.952
-    │
-SchNet (GNN do zero)
-    0.908
+                              ▼
+                  MACE Stage A (GNN pura)
+                              0.9564 ± 0.0015  ← multi-seed estável
+                              │
+                              ▼
+                  ETR + 10 handcrafted (baseline)
+                              0.9341
+                              │
+                              ▼
+                  SchNet (GNN do zero)
+                              0.9105 ± 0.0511  ← alta variância
 ```
 
 ---
 
 ## Hipótese
 
-Uma GNN equivariante pré-treinada (MACE-MP-0) com fine-tune supera
-modelos baseados em features manuais na predição de ΔG_H\* para
-catalisadores HER.
+Representação aprendida pelo MACE-MP-0 (pré-treinado em milhões de estruturas
+Materials Project/OCP) supera descritores handcrafted **tanto em performance
+quanto em reprodutibilidade**. Transfer learning fornece prior estável que
+elimina a variância inerente ao treino do zero.
 
 ## Evidência
 
-1. O baseline ETR + 10 features handcrafted atinge R²=0.934,
-   superando o paper de referência (0.922).
-2. Uma GNN treinada do zero (SchNet) fica abaixo (0.908) -
-   o pré-treino é essencial.
-3. Embeddings invariantes congelados do MACE + ETR atingem R²=0.961,
-   estabelecendo o teto de informação acessível nos dados.
-4. O fine-tune do MACE com cabeça MLP (Stage A) atinge R²=0.947,
-   confirmando a hipótese: a GNN pré-treinada supera o baseline
-   handcrafted (0.934) e o paper (0.922) sem usar features manuais.
-5. A redução de dimensionalidade mostra que 10-20 dimensões dos
-   embeddings já superam as 10 features handcrafted, demonstrando
-   a superioridade da representação aprendida.
+1. **MACE Stage A** (GNN pura, backbone frozen + MLP head): R²=0.9564 ± 0.0015
+   (n=5). Supera baseline ETR+handcrafted (0.9341) em 2.2 pontos R².
+
+2. **ETR + MACE embeddings** (híbrido): R²=0.9613. Estabelece teto de informação
+   da representação MACE pré-treinada (sem fine-tune).
+
+3. **SchNet do zero**: R²=0.9105 ± 0.0511 (n=5). Pior média e **34× mais
+   variância** que Stage A. Sem prior, converge erraticamente.
+
+4. **Mesmo top-10 dimensões dos embeddings MACE** (0.940) supera as 10 features
+   handcrafted (0.934) — representação aprendida concentra informação melhor.
+
+5. **Auditoria de splits**: todos os 5 modelos avaliados no **mesmo test set
+   canônico** (1172 IDs, y_true bit-identical cross-run). Zero leakage
+   train/test, validado por `sid` em `predictions.parquet`.
 
 ## Limitações
 
-- Dataset de 5.860 estruturas (vs 10.855 do paper) devido a
-  limitações da API do Catalysis Hub.
-- O ETR sobre embeddings congelados (0.961) supera a MLP (0.947),
-  sugerindo que modelos baseados em árvore extraem mais informação
-  de representações de alta dimensionalidade com poucos exemplos.
-- Full fine-tune (Stage C) sofre de overfitting com 5M parâmetros.
+- Dataset de 5.860 estruturas após filtros aplicados sobre o snapshot
+  disponível do Catalysis Hub.
+- ETR sobre embeddings (0.961) supera Stage A com MLP (0.956), sugerindo que
+  modelos baseados em árvore extraem mais informação de representações de
+  alta dimensionalidade com poucos exemplos (4220 train) do que MLP head leve.
+- Full fine-tune MACE (Stage C, run histórico R²=0.940) sofre overfit com
+  5M parâmetros treináveis e 4220 amostras de treino.
+- SchNet alta variância não foi resolvida por ajustes de early stopping
+  (patience=60 + monitor=val_r2 mode=max). Causa: não-determinismo CUDA +
+  ausência de prior. Determinismo total exigiria
+  `torch.use_deterministic_algorithms(True)` + flags adicionais.

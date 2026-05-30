@@ -70,9 +70,12 @@ def run_training(cfg: dict[str, Any]) -> dict[str, Any]:
     y_train = torch.tensor([d.y.item() for d in train_ds])
     model.set_target_stats(y_train.mean(), y_train.std())
 
-    ckpt = ModelCheckpoint(monitor="val_loss", save_top_k=3, save_last=True,
+    monitor = cfg.get("early_stop_monitor") or "val_r2"
+    mode = cfg.get("early_stop_mode") or ("max" if monitor == "val_r2" else "min")
+    ckpt = ModelCheckpoint(monitor=monitor, mode=mode, save_top_k=3, save_last=True,
                            dirpath=cfg["ckpt_dir"])
-    callbacks = [ckpt, EarlyStopping(monitor="val_loss", patience=cfg["patience"])]
+    callbacks = [ckpt, EarlyStopping(monitor=monitor, mode=mode,
+                                      patience=cfg["patience"])]
     tb_logger = TensorBoardLogger(save_dir="logs", name=cfg["run_name"])
 
     trainer = pl.Trainer(
@@ -99,12 +102,15 @@ def run_training(cfg: dict[str, Any]) -> dict[str, Any]:
         embeddings.append(model.embed(batch).cpu().numpy())
         emb_y.extend(batch.y.view(-1).cpu().tolist())
 
+    test_sids = [d.sid for d in test_ds]
+
     return {
         "model": model,
         "trainer": trainer,
         "metrics": metrics,
         "y_true": np.array(model.test_true),
         "y_pred": np.array(model.test_pred),
+        "test_sids": test_sids,
         "embeddings": np.concatenate(embeddings, axis=0),
         "embeddings_y": np.array(emb_y),
         "n_params": n_params,

@@ -1,8 +1,0 @@
-model: ExtraTreesRegressor
-strategy: pca95
-n_features: 4
-features:
-- PC1
-- PC2
-- PC3
-- PC4

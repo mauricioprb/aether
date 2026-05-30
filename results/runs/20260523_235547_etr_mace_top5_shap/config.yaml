@@ -1,9 +1,0 @@
-model: ExtraTreesRegressor
-strategy: top5_shap
-n_features: 5
-features:
-- mace_E_H
-- mace_E_neighbors_mean
-- mace_E_neighbors_min
-- mace_n_neighbors
-- mace_E_per_atom

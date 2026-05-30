@@ -1,0 +1,16 @@
+{
+  "r2_test": 0.9574859622959125,
+  "mae_test": 0.07052537480408148,
+  "rmse_test": 0.12924279954463164,
+  "mdae_test": 0.049709491431713104,
+  "max_err_test": 1.745922327041626,
+  "pearson_r_test": 0.9789314362736229,
+  "spearman_rho_test": 0.9832959234053776,
+  "smape_test": 0.25553375997137573,
+  "mae_meV_test": 70.52537480408148,
+  "frac_chem_acc_test": 0.43856655290102387,
+  "n_params": 328193,
+  "vram_peak_gb": 0.98,
+  "best_ckpt": "/home/mauricio/repositorios/her-gnn/logs/checkpoints/mace_ft_stageA_v2_seed1/epoch=192-step=50952.ckpt",
+  "elapsed_sec": 2711.52
+}

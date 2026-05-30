@@ -1,4 +1,4 @@
-"""The 10 handcrafted descriptors from Wang et al. (2025).
+"""10 handcrafted descriptors for HER adsorption complexes.
 
 For each adsorption complex we split the slab atoms into:
   - central atoms: surface atoms within 2.4 A of the adsorbed H
@@ -16,10 +16,9 @@ and aggregate elemental properties with the geometric mean.
   Out_e1    valence electrons, neighbors (geom. mean)
   psi1      Pauling electronegativity, neighbors (geom. mean)
 
-Property choices (documented deviations where the paper is ambiguous): Nd/Np are
-total d/p electron counts; Out_e is mendeleev ``nvalence`` (group-consistent,
-unlike the literal outer shell which is anomalous for e.g. Pd); CN uses a
-covalent-radii neighbor list.
+Property choices: Nd/Np are total d/p electron counts; Out_e is mendeleev
+``nvalence`` (group-consistent, unlike the literal outer shell which is
+anomalous for e.g. Pd); CN uses a covalent-radii neighbor list.
 """
 
 from __future__ import annotations

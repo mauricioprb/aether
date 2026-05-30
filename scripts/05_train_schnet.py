@@ -15,7 +15,7 @@ import time
 import numpy as np
 import torch
 
-from training.evaluate import metrics_from_preds, parity_figure
+from training.evaluate import metrics_from_preds
 from training.run_logger import RunLogger
 from training.train import run_training
 
@@ -34,7 +34,12 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--num-interactions", type=int, default=6)
     p.add_argument("--num-gaussians", type=int, default=50)
     p.add_argument("--loss", choices=["l1", "mse"], default="l1")
-    p.add_argument("--patience", type=int, default=30)
+    p.add_argument("--patience", type=int, default=60)
+    p.add_argument("--early-stop-monitor", default="val_r2",
+                   choices=["val_loss", "val_r2", "val_mae"])
+    p.add_argument("--early-stop-mode", default=None,
+                   choices=["min", "max"],
+                   help="default: max for val_r2, min for val_loss/val_mae")
     p.add_argument("--val-frac", type=float, default=0.1)
     p.add_argument("--num-workers", type=int, default=4)
     p.add_argument("--seed", type=int, default=42)
@@ -82,9 +87,10 @@ def main() -> None:
             "best_ckpt": result["best_ckpt"],
             "elapsed_sec": train_seconds,
         })
-        run.log_predictions(result["y_true"], result["y_pred"], "test")
-        run.log_figure(parity_figure(result["y_true"], result["y_pred"],
-                                     title="SchNet parity"), "parity_test.png")
+        run.log_predictions(result["y_true"], result["y_pred"], "test",
+                            sid=result["test_sids"])
+        run.log_standard_figures(result["y_true"], result["y_pred"],
+                                  model_label="SchNet", color="#c44e52")
         np.save(run.run_dir / "embeddings.npy", result["embeddings"])
         np.save(run.run_dir / "embeddings_y.npy", result["embeddings_y"])
 

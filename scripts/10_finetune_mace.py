@@ -26,7 +26,7 @@ from torch_geometric.loader import DataLoader
 
 from data.mace_dataset import MACEDataset, three_way_split_mace
 from models.mace_finetune import LitMACEFineTune
-from training.evaluate import metrics_from_preds, parity_figure
+from training.evaluate import metrics_from_preds
 from training.run_logger import RunLogger
 
 logger = logging.getLogger("mace-finetune")
@@ -54,8 +54,13 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--loss", choices=["l1", "mse"], default="l1")
     p.add_argument("--lr-patience", type=int, default=20)
     p.add_argument("--lr-factor", type=float, default=0.5)
-    p.add_argument("--patience", type=int, default=30,
+    p.add_argument("--patience", type=int, default=60,
                    help="Early stopping patience (epochs)")
+    p.add_argument("--early-stop-monitor", default="val_r2",
+                   choices=["val_loss", "val_r2", "val_mae"])
+    p.add_argument("--early-stop-mode", default=None,
+                   choices=["min", "max"],
+                   help="default: max for val_r2, min for val_loss/val_mae")
     p.add_argument("--val-frac", type=float, default=0.1)
     p.add_argument("--num-workers", type=int, default=0)
     p.add_argument("--seed", type=int, default=42)
@@ -151,9 +156,11 @@ def main() -> None:
 
     seed_everything(args.seed, workers=True)
 
-    ckpt = ModelCheckpoint(monitor="val_loss", save_top_k=3, save_last=True,
+    monitor = args.early_stop_monitor
+    mode = args.early_stop_mode or ("max" if monitor == "val_r2" else "min")
+    ckpt = ModelCheckpoint(monitor=monitor, mode=mode, save_top_k=3, save_last=True,
                            dirpath=cfg["ckpt_dir"])
-    early_stop = EarlyStopping(monitor="val_loss", patience=args.patience)
+    early_stop = EarlyStopping(monitor=monitor, mode=mode, patience=args.patience)
     tb_logger = TensorBoardLogger(save_dir="logs", name=args.run_name)
 
     t0 = time.perf_counter()
@@ -199,9 +206,10 @@ def main() -> None:
             "best_ckpt": ckpt.best_model_path,
             "elapsed_sec": train_seconds,
         })
-        run.log_predictions(y_true, y_pred, "test")
-        run.log_figure(parity_figure(y_true, y_pred,
-                                     title="MACE fine-tune parity"), "parity_test.png")
+        run.log_predictions(y_true, y_pred, "test", sid=test_ds.sids)
+        run.log_standard_figures(y_true, y_pred,
+                                  model_label=f"MACE {args.run_name}",
+                                  color="#4c72b0")
 
         # Save embeddings from test set
         model.eval().cuda()

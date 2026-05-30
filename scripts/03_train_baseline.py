@@ -31,8 +31,12 @@ def main() -> None:
     result = run_baseline(df)
     logger.info("=== TEST METRICS ===")
     for k, v in result.metrics_test.items():
-        logger.info("  %-5s = %.4f", k, v)
+        logger.info("  %-14s = %.6f", k, v)
     logger.info("best params: %s", result.best_params)
+
+    # Recover IDs aligned with X_train/X_test row order via the original df index.
+    train_sids = df.loc[result.X_train.index, "id"].tolist()
+    test_sids = df.loc[result.X_test.index, "id"].tolist()
 
     config = {
         "model": "ExtraTreesRegressor",
@@ -48,16 +52,19 @@ def main() -> None:
     }
     with RunLogger(name="etr_baseline", config=config) as run:
         run.log_metrics({
-            **{f"{k.lower()}_test": v for k, v in result.metrics_test.items()},
-            **{f"{k.lower()}_train": v for k, v in result.metrics_train.items()},
+            **{f"{k}_test": v for k, v in result.metrics_test.items()},
+            **{f"{k}_train": v for k, v in result.metrics_train.items()},
             "n_params": None,
         })
-        run.log_predictions(result.y_test, result.y_test_pred, "test")
-        run.log_predictions(result.y_train, result.y_train_pred, "train")
-        run.log_figure(plot_dG_hist(df["delta_G_H"].to_numpy()), "fig3b_dG_hist.png")
-        run.log_figure(plot_parity(result), "fig4f_parity.png")
-        run.log_figure(plot_shap_bar(result), "fig6d_shap.png")
-    logger.info("figures written to data/figures/ and results/runs/")
+        run.log_predictions(result.y_test, result.y_test_pred, "test", sid=test_sids)
+        run.log_predictions(result.y_train, result.y_train_pred, "train", sid=train_sids)
+        run.log_standard_figures(result.y_test, result.y_test_pred,
+                                  model_label="ETR + 10 handcrafted",
+                                  color="#dd8452")
+        run.log_figure(plot_dG_hist(df["delta_G_H"].to_numpy()), "dG_hist.png")
+        run.log_figure(plot_parity(result), "parity_train_test.png")
+        run.log_figure(plot_shap_bar(result), "shap_importance.png")
+    logger.info("figures written to results/runs/{ts}_etr_baseline/figures/")
 
 
 if __name__ == "__main__":

@@ -21,12 +21,15 @@ def load_split(name: str, mace_dir: Path = MACE_DIR, suffix: str = "") -> dict:
 
 def load_xy(mace_dir: Path = MACE_DIR, suffix: str = ""):
     """ETR-style split: train = canonical train (train.npz + val.npz), test = test.npz.
-    Matches the handcrafted-feature ETR baseline's 4688/1172 partition.
-    suffix="_emb" loads the node-embedding features instead of the scalars."""
+    Canonical 4688/1172 partition shared across all models.
+    suffix="_emb" loads the node-embedding features instead of the scalars.
+    Returns X_train, y_train, X_test, y_test, feature_names, test_ids, train_ids."""
     tr, va, te = (load_split(n, mace_dir, suffix) for n in ("train", "val", "test"))
     X_train = np.vstack([tr["X"], va["X"]])
     y_train = np.concatenate([tr["y"], va["y"]])
-    return X_train, y_train, te["X"], te["y"], tr["names"]
+    train_ids = np.concatenate([tr["ids"], va["ids"]]).tolist()
+    test_ids = list(te["ids"])
+    return X_train, y_train, te["X"], te["y"], tr["names"], test_ids, train_ids
 
 
 def as_frame(split: dict) -> pd.DataFrame:

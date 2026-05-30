@@ -1,4 +1,4 @@
-"""Dataset filters replicating Wang et al. (2025).
+"""Dataset filters for HER reactions.
 
 Keep a reaction only if:
   - delta_G_H in [-2, 2] eV
