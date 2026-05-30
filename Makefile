@@ -85,6 +85,28 @@ api-dev:                    ## Run REST API in dev mode (auto-reload). Open http
 api:                        ## Run REST API in production mode.
 	.venv/bin/uvicorn app.api:app --host $(API_HOST) --port $(API_PORT) --workers 1
 
+# ── Docker ──────────────────────────────────────────────────────────────────
+docker-build:               ## Build CPU-only API image (aether-api:latest, ~3 GB).
+	docker compose build api
+
+docker-up:                  ## Start API container in background (port 8000).
+	docker compose up -d api
+
+docker-logs:                ## Tail API container logs.
+	docker compose logs -f api
+
+docker-down:                ## Stop + remove containers.
+	docker compose down
+
+docker-shell:               ## Open shell inside running api container.
+	docker compose exec api bash
+
+docker-test:                ## Smoke test running API (curl /stats + /screen).
+	@curl -fsS http://localhost:$(API_PORT)/stats | head -1; echo
+	@curl -fsS -X POST http://localhost:$(API_PORT)/screen \
+		-H "Content-Type: application/json" \
+		-d '{"elements":["Pt"],"top":3,"model":"etr_emb","exclude_train":true}' | head -1; echo
+
 # ── End-to-end ───────────────────────────────────────────────────────────────
 pipeline: etr-baseline emb-sweep schnet-multiseed stagea-multiseed report ## Full pipeline (GPU, ~6 h).
 
@@ -97,4 +119,5 @@ clean-results:              ## Remove all run dirs (KEEPS summary + tables + fig
 .PHONY: help data-download data-build graphs etr-baseline schnet-multiseed \
          mace-features mace-embeddings stagea-multiseed emb-sweep aggregate \
          compare figures report pipeline screen screen-help api api-dev \
+         docker-build docker-up docker-logs docker-down docker-shell docker-test \
          clean-checkpoints clean-results

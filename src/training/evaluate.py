@@ -12,12 +12,12 @@ def metrics_from_preds(y_true, y_pred) -> dict[str, float]:
     """Unified regression metric pack used by every model in the project.
 
     Keys:
-      r2, mae, rmse                 — base regression metrics
-      mdae, max_err                 — robust + worst-case
-      pearson_r, spearman_rho       — correlation (Spearman = ranking quality)
-      smape                         — symmetric MAPE (safe when target crosses zero)
-      mae_meV                       — MAE in meV (literature comparison)
-      frac_chem_acc                 — fraction of preds with |error| < 0.043 eV
+      r2, mae, rmse                 - base regression metrics
+      mdae, max_err                 - robust + worst-case
+      pearson_r, spearman_rho       - correlation (Spearman = ranking quality)
+      smape                         - symmetric MAPE (safe when target crosses zero)
+      mae_meV                       - MAE in meV (literature comparison)
+      frac_chem_acc                 - fraction of preds with |error| < 0.043 eV
     """
     y_true = np.asarray(y_true, dtype=float)
     y_pred = np.asarray(y_pred, dtype=float)
@@ -26,7 +26,7 @@ def metrics_from_preds(y_true, y_pred) -> dict[str, float]:
     mse = float(mean_squared_error(y_true, y_pred))
     mae = float(mean_absolute_error(y_true, y_pred))
 
-    # Symmetric MAPE — stable for energies that cross zero. Bounded in [0, 2].
+    # Symmetric MAPE - stable for energies that cross zero. Bounded in [0, 2].
     smape_denom = np.maximum(np.abs(y_true) + np.abs(y_pred), 1e-12)
     smape = float(np.mean(2.0 * abs_err / smape_denom))
 

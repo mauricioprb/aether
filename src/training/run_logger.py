@@ -45,11 +45,11 @@ class RunLogger:
 
         Pass the list/array of structure IDs (one per sample) in the same order as
         ``y_true``/``y_pred``. Passing ``None`` is allowed for backward compat but
-        emits a warning — comparison scripts may refuse runs without ``sid``.
+        emits a warning - comparison scripts may refuse runs without ``sid``.
         """
         n = len(y_true)
         if sid is None:
-            logger.warning("run %s: log_predictions(split=%s) called without sid — "
+            logger.warning("run %s: log_predictions(split=%s) called without sid - "
                            "reproducibility audits will be limited", self.name, split)
             sid_col = [""] * n
         else:

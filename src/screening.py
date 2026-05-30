@@ -51,7 +51,7 @@ def load_full_dataset() -> pd.DataFrame:
 def load_canonical_test_ids() -> frozenset[str]:
     if not SPLITS_PATH.exists():
         raise FileNotFoundError(
-            f"{SPLITS_PATH} missing — run `make graphs` first."
+            f"{SPLITS_PATH} missing - run `make graphs` first."
         )
     return frozenset(map(str, json.loads(SPLITS_PATH.read_text())["test"]))
 
@@ -124,10 +124,10 @@ def _etr_model():
                 logger.info("loaded cached ETR from %s (fingerprint=%s)",
                              ETR_CACHE_PATH, fp)
                 return cached["model"]
-            logger.info("ETR cache fingerprint stale (%s != %s) — re-fitting",
+            logger.info("ETR cache fingerprint stale (%s != %s) - re-fitting",
                          cached.get("fingerprint"), fp)
         except Exception as exc:
-            logger.warning("failed to load %s (%s) — re-fitting", ETR_CACHE_PATH, exc)
+            logger.warning("failed to load %s (%s) - re-fitting", ETR_CACHE_PATH, exc)
 
     parts = []
     for split in ("train", "val"):

@@ -129,7 +129,7 @@ def markdown_table(results: list[GroupResult]) -> str:
 
 
 def per_seed_table(results: list[GroupResult]) -> str:
-    """One row per (group, seed) — useful for inspecting variance."""
+    """One row per (group, seed) - useful for inspecting variance."""
     cols = ["Modelo", "seed", "R²", "MAE (eV)", "MAE (meV)", "RMSE (eV)", "% < 43 meV", "epoch_best"]
     header = "| " + " | ".join(cols) + " |\n"
     sep = "|" + "|".join(["---"] * len(cols)) + "|\n"

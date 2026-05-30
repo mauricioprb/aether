@@ -6,10 +6,10 @@ Dissertação: predição de ΔG_H\* para catalisadores de HER (Hydrogen Evoluti
 Reaction). Compara quatro modelos sobre o mesmo dataset (5860 estruturas) e
 split canônico (4220 train / 468 val / 1172 test):
 
-- **ETR + 10 handcrafted** — baseline (descritores eletrônicos/estruturais)
-- **SchNet (GNN do zero)** — GNN sem pré-treino, referência sem prior
-- **MACE Stage A (GNN)** — fine-tune do MACE-MP-0 pré-treinado (frozen + MLP head)
-- **ETR + MACE Embeddings 512** — ETR sobre embeddings invariantes congelados
+- **ETR + 10 handcrafted** - baseline (descritores eletrônicos/estruturais)
+- **SchNet (GNN do zero)** - GNN sem pré-treino, referência sem prior
+- **MACE Stage A (GNN)** - fine-tune do MACE-MP-0 pré-treinado (frozen + MLP head)
+- **ETR + MACE Embeddings 512** - ETR sobre embeddings invariantes congelados
 
 Reportes seguem prática padrão: **mean ± std sobre 5 seeds** para os modelos
 não-determinísticos (SchNet, Stage A); valor único para os determinísticos
@@ -65,7 +65,7 @@ Métricas completas + legendas: `results/dissertacao_metrics.md`.
 
 **Ordenação final**: ETR + MACE emb (0.961) > MACE Stage A (0.956) > ETR
 handcrafted (0.934) > SchNet (0.911 ± 0.051). Representação pré-treinada
-MACE-MP-0 é a fonte do ganho — em performance E em reprodutibilidade.
+MACE-MP-0 é a fonte do ganho - em performance E em reprodutibilidade.
 
 Nota: o R² do ETR baseline re-ancorou de 0.910 para 0.934 ao fixar o split
 canônico por id (`data/splits.json`), agora reproduzível e compartilhado com
@@ -84,11 +84,11 @@ make report                 # aggregate + compare + figures
 ```
 
 Toda métrica fica em `results/runs/{timestamp}_{name}/`:
-- `config.yaml` — hyperparams
-- `metrics.json` — pacote unificado (R², MAE, RMSE, MDAE, Pearson r, Spearman ρ, sMAPE, MAE meV, % < 43 meV, ...)
-- `predictions.parquet` — colunas `[sid, y_true, y_pred, split]`
-- `figures/` — parity, residual_hist, residual_vs_pred, cumulative_error
-- `env.txt` — git hash + dependency snapshot
+- `config.yaml` - hyperparams
+- `metrics.json` - pacote unificado (R², MAE, RMSE, MDAE, Pearson r, Spearman ρ, sMAPE, MAE meV, % < 43 meV, ...)
+- `predictions.parquet` - colunas `[sid, y_true, y_pred, split]`
+- `figures/` - parity, residual_hist, residual_vs_pred, cumulative_error
+- `env.txt` - git hash + dependency snapshot
 
 Agregada em `results/summary.json`. Multi-seed sumarizado em
 `results/multiseed_summary.md` (mean ± std + per-seed tabela).
@@ -122,6 +122,29 @@ Saída: tabela com `chemical_formula`, `facet`, `site_type`, `dG_pred`,
 
 Filtro `--elements E1 E2 ...`: retorna estruturas que contêm **todos** os
 metais informados (pode ter outros). H é sempre adsorbato, ignorado no filtro.
+
+## Docker
+
+Imagem CPU-only do API. Dados/checkpoints montados como volumes (não vão no
+image, ~3GB final).
+
+```bash
+make docker-build              # builda aether-api:latest (~10-15 min na 1ª vez)
+make docker-up                 # sobe container em background, porta 8000
+make docker-logs               # tail logs
+make docker-test               # curl /stats + /screen
+make docker-down               # para + remove
+make docker-shell              # bash dentro do container
+```
+
+`docker-compose.yml` monta:
+- `./data` → `/app/data` (read-only) - SQLite + embeddings MACE
+- `./logs/checkpoints` → `/app/logs/checkpoints` (read-only) - MACE Stage A ckpts
+- `./data/model_cache` → `/app/data/model_cache` (writable) - pickle ETR persiste entre restarts
+
+Pra GPU (NVIDIA Docker): descomentar service `api-gpu` no `docker-compose.yml`.
+Sem GPU funciona perfeitamente - `etr_emb` é CPU-only, `stagea` roda CPU mas
+~40× mais lento por estrutura.
 
 ## REST API
 
@@ -184,12 +207,12 @@ default. `stagea` opcional pra cross-check.
 Todo modelo reporta o mesmo conjunto via `training.evaluate.metrics_from_preds`:
 
 ```
-r2, mae, rmse                  — base regressão
-mdae, max_err                  — robusto + worst-case
-pearson_r, spearman_rho        — correlação + ranking
-smape                          — MAPE simétrico (estável quando y cruza zero)
-mae_meV                        — escala literatura
-frac_chem_acc                  — fração com |erro| < 43 meV (chemical accuracy)
+r2, mae, rmse                  - base regressão
+mdae, max_err                  - robusto + worst-case
+pearson_r, spearman_rho        - correlação + ranking
+smape                          - MAPE simétrico (estável quando y cruza zero)
+mae_meV                        - escala literatura
+frac_chem_acc                  - fração com |erro| < 43 meV (chemical accuracy)
 ```
 
 Toda run salva 4 figuras padronizadas (parity, residual_hist, residual_vs_pred,
@@ -244,7 +267,7 @@ Comparação histórica (1 seed cada, runs anteriores):
 | Stage A+ (frozen + MLP 3-layer + dropout) | 0.945 | run histórico |
 | Stage C (full fine-tune) | 0.940 | run histórico |
 
-Stage A vence Stage A+ e Stage C nesse dataset — backbone congelado + cabeça
+Stage A vence Stage A+ e Stage C nesse dataset - backbone congelado + cabeça
 leve é o sweet spot. Full fine-tune sofre overfit com 5M params em 4220 train.
 
 ## Por que SchNet tem variância alta?

@@ -145,7 +145,7 @@ elimina a variância inerente ao treino do zero.
    variância** que Stage A. Sem prior, converge erraticamente.
 
 4. **Mesmo top-10 dimensões dos embeddings MACE** (0.940) supera as 10 features
-   handcrafted (0.934) — representação aprendida concentra informação melhor.
+   handcrafted (0.934) - representação aprendida concentra informação melhor.
 
 5. **Auditoria de splits**: todos os 5 modelos avaliados no **mesmo test set
    canônico** (1172 IDs, y_true bit-identical cross-run). Zero leakage
