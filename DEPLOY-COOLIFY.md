@@ -1,21 +1,21 @@
-# Deploy on Coolify
+# Deploy no Coolify
 
-Coolify acts as the external reverse proxy: its built-in Traefik terminates
-TLS (Let's Encrypt, automatic) and routes the public domain to the `web`
-container. The API stays internal. The ~28 MB of dataset + checkpoint are **not**
-in git or the image — they download on first boot from `ARTIFACTS_URL` into a
-persistent volume (the ETR model is refit on first use, see below).
+O Coolify atua como proxy reverso externo: o Traefik embutido termina o TLS
+(Let's Encrypt, automático) e roteia o domínio público para o container `web`.
+A API fica interna. Os ~28 MB de dataset + checkpoint **não** estão no git nem na
+imagem — são baixados no primeiro boot a partir de `ARTIFACTS_URL` para um volume
+persistente (o modelo ETR é re-treinado no primeiro uso, veja abaixo).
 
-## 1. Upload the artifacts tarball
+## 1. Subir o tarball de artefatos
 
-A tarball with the minimal runtime set is at `/tmp/aether-artifacts.tar.gz`
-(~28 MB). Regenerate any time with:
+Um tarball com o conjunto mínimo de runtime fica em `/tmp/aether-artifacts.tar.gz`
+(~28 MB). Regenere quando quiser com:
 
 ```sh
-make artifacts-tarball     # see Makefile target below, or run the tar by hand
+make artifacts-tarball     # veja o target no Makefile, ou rode o tar à mão
 ```
 
-Contents (extracts relative to `/app`):
+Conteúdo (extrai relativo a `/app`):
 
 ```
 data/metadata.sqlite
@@ -24,73 +24,74 @@ data/mace_features/{train,val,test}_emb.npz
 logs/checkpoints/mace_ft_stageA_v2_seed42/last.ckpt
 ```
 
-The ETR model (`etr_emb.pkl`, ~193 MB) is **not** bundled: the API refits it
-from the `_emb.npz` files and HMAC-signs the cache on the first `/screen` call
-(~1-2 min, then served from the `aether-data` volume). This keeps the download
-tiny and means a tampered pickle can never ship in the tarball.
+O modelo ETR (`etr_emb.pkl`, ~193 MB) **não** vai no pacote: a API o re-treina a
+partir dos arquivos `_emb.npz` e assina o cache com HMAC na primeira chamada a
+`/screen` (~1-2 min, depois servido pelo volume `aether-data`). Isso mantém o
+download pequeno e garante que um pickle adulterado nunca viaje dentro do tarball.
 
-Upload it to any HTTP-reachable object storage and get a download URL:
+Suba para qualquer object storage acessível por HTTP e pegue uma URL de download:
 
-- **Cloudflare R2** (free tier, no egress fees) — recommended
-- **AWS S3 / Backblaze B2** — presigned URL or public object
-- Any static file host returning the raw `.tar.gz`
+- **Cloudflare R2** (free tier, sem taxa de egress) — recomendado
+- **AWS S3 / Backblaze B2** — URL presigned ou objeto público
+- Qualquer host de arquivos estáticos que devolva o `.tar.gz` cru
 
-The URL must return the raw gzip bytes (not an HTML download page). Test:
+A URL precisa devolver os bytes gzip crus (não uma página HTML de download). Teste:
 
 ```sh
 curl -fsSL "$ARTIFACTS_URL" | tar -tz | head
 ```
 
-Compute its sha256 (required — the API refuses to extract an unverified
-tarball, and the URL must be `https://`):
+Calcule o sha256 (obrigatório — a API recusa extrair um tarball não verificado, e
+a URL precisa ser `https://`):
 
 ```sh
 curl -fsSL "$ARTIFACTS_URL" | sha256sum
 ```
 
-## 2. Create the resource in Coolify
+## 2. Criar o recurso no Coolify
 
-1. **+ New** → **Docker Compose** (Git-based) → select this repo + branch.
-2. Set **Docker Compose Location** to `docker-compose.coolify.yml`.
-3. **Environment Variables** → add:
-   - `ARTIFACTS_URL` = the tarball download URL from step 1 (must be `https://`).
-   - `ARTIFACTS_SHA256` = the sha256 from step 1. Boot aborts on mismatch.
-   - `ETR_CACHE_KEY` = a long random secret (`openssl rand -hex 32`). Signs the
-     ETR model cache (HMAC) so a tampered `etr_emb.pkl` is never unpickled.
-   - `API_KEY` *(optional)* = set to require `X-API-Key` on `/screen`. Leave
-     unset for the open public demo. If set, also forward the header at the
-     proxy (see Notes).
-   - `ENABLE_DOCS` *(optional)* = `1` to expose `/api/docs`. Default off.
-4. **Domains** → on the `web` service, set your domain, internal port `80`.
-   Coolify provisions the TLS cert automatically.
+1. **+ New** → **Docker Compose** (baseado em Git) → selecione este repo + branch.
+2. Em **Docker Compose Location**, aponte para `docker-compose.coolify.yml`.
+3. **Environment Variables** → adicione:
+   - `ARTIFACTS_URL` = a URL de download do tarball do passo 1 (precisa ser `https://`).
+   - `ARTIFACTS_SHA256` = o sha256 do passo 1. O boot aborta se não bater.
+   - `ETR_CACHE_KEY` = um segredo aleatório longo (`openssl rand -hex 32`). Assina o
+     cache do modelo ETR (HMAC) para que um `etr_emb.pkl` adulterado nunca seja
+     desserializado.
+   - `API_KEY` *(opcional)* = defina para exigir `X-API-Key` no `/screen`. Deixe
+     em branco para o demo público aberto. Se definir, encaminhe também o header
+     no proxy (veja Notas).
+   - `ENABLE_DOCS` *(opcional)* = `1` para expor `/api/docs`. Desligado por padrão.
+4. **Domains** → no serviço `web`, defina seu domínio, porta interna `80`.
+   O Coolify provisiona o certificado TLS automaticamente.
 5. **Deploy.**
 
-First deploy: the API container downloads + extracts the tarball before it
-passes its healthcheck (`start_period: 300s` allows for this). `web` waits for
-`api` to be healthy. Watch the API logs for `[entrypoint] artifacts ready.`
+Primeiro deploy: o container da API baixa + extrai o tarball antes de passar no
+healthcheck (`start_period: 300s` dá margem pra isso). O `web` espera o `api`
+ficar saudável. Acompanhe os logs da API por `[entrypoint] artifacts ready.`
 
 ## 3. Redeploys
 
-The `aether-data` and `aether-checkpoints` volumes are persistent, so the
-download happens **only once**. Later redeploys reuse them and start fast.
-To force a re-download, delete those volumes in Coolify and redeploy.
+Os volumes `aether-data` e `aether-checkpoints` são persistentes, então o
+download acontece **apenas uma vez**. Redeploys seguintes reaproveitam e sobem
+rápido. Para forçar um novo download, apague esses volumes no Coolify e redeploy.
 
-## Endpoints once live
+## Endpoints quando estiver no ar
 
-- `https://<domain>/` — web UI
-- `https://<domain>/api/stats` — proxied API (rate-limited 10 r/s)
-- `https://<domain>/api/docs` — FastAPI Swagger (only if `ENABLE_DOCS=1`)
+- `https://<domínio>/` — UI web
+- `https://<domínio>/api/stats` — API via proxy (rate-limit 10 r/s)
+- `https://<domínio>/api/docs` — Swagger do FastAPI (só se `ENABLE_DOCS=1`)
 
-## Notes / limits
+## Notas / limites
 
-- App-level auth is **opt-in**: unset `API_KEY` = open demo (nginx rate-limit is
-  the only control); set `API_KEY` = `/screen` requires a matching `X-API-Key`.
-  When enabled, inject the header at the proxy so the SPA keeps working, e.g. add
-  `proxy_set_header X-API-Key "<key>";` to the `/api/` block in
-  `services/web/nginx.conf`, or add Coolify Basic Auth on the domain instead.
-- The API listens only on the internal compose network (`expose`, never
-  published), so it is not directly reachable from the internet.
-- `results/` (model comparison data) is baked into the API image, so
-  `/api/comparison` works without the tarball.
-- If the proxy runs on a separate host than the containers, that's still fine —
-  Coolify wires its proxy to the container network regardless.
+- A auth de aplicação é **opt-in**: `API_KEY` em branco = demo aberto (o rate-limit
+  do nginx é o único controle); `API_KEY` definido = `/screen` exige um `X-API-Key`
+  correspondente. Quando ativado, injete o header no proxy para o SPA continuar
+  funcionando, ex.: adicione `proxy_set_header X-API-Key "<chave>";` ao bloco
+  `/api/` em `services/web/nginx.conf`, ou use o Basic Auth do Coolify no domínio.
+- A API escuta apenas na rede interna do compose (`expose`, nunca publicada),
+  então não é alcançável diretamente pela internet.
+- `results/` (dados de comparação dos modelos) é embutido na imagem da API, então
+  `/api/comparison` funciona sem o tarball.
+- Se o proxy rodar em um host separado dos containers, tudo bem — o Coolify conecta
+  o proxy à rede dos containers de qualquer forma.

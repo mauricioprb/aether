@@ -40,7 +40,7 @@ services:
     image: aether-web:latest
     restart: unless-stopped
     environment:
-      - SERVICE_FQDN_WEB_80
+      - "SERVICE_FQDN_WEB_80=${SERVICE_FQDN_WEB_80:-}"
     expose:
       - "80"
     depends_on:
