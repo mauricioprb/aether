@@ -1,3 +1,3 @@
-"""HIDRA: IA para Descoberta de Catalisadores por Redes em Grafos Atômicos."""
+"""AETHER: AI-Equivariant Tool for Hydrogen Evolution Reaction."""
 
 __version__ = "0.1.0"

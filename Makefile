@@ -117,17 +117,17 @@ docker-test:                ## Smoke test running stack (via web proxy; API is i
 	@echo "Web SPA:"
 	@curl -fsS -o /dev/null -w "  HTTP %{http_code} (%{size_download} bytes)\n" http://localhost:$(WEB_PORT)/
 
-artifacts-tarball:          ## Build /tmp/hidra-artifacts.tar.gz for ARTIFACTS_URL (Coolify deploy).
+artifacts-tarball:          ## Build /tmp/aether-artifacts.tar.gz for ARTIFACTS_URL (Coolify deploy).
 	@CKPT=$$(ls -1 logs/checkpoints/mace_ft_stageA_v2_seed*/last.ckpt | sort | tail -1); \
 	echo "checkpoint: $$CKPT"; \
-	tar -czf /tmp/hidra-artifacts.tar.gz \
+	tar -czf /tmp/aether-artifacts.tar.gz \
 		data/metadata.sqlite \
 		data/splits.json \
 		data/mace_features/train_emb.npz \
 		data/mace_features/val_emb.npz \
 		data/mace_features/test_emb.npz \
 		"$$CKPT"; \
-	echo "wrote /tmp/hidra-artifacts.tar.gz ($$(du -h /tmp/hidra-artifacts.tar.gz | cut -f1))"; \
+	echo "wrote /tmp/aether-artifacts.tar.gz ($$(du -h /tmp/aether-artifacts.tar.gz | cut -f1))"; \
 	echo "note: etr_emb.pkl excluded; the API refits + HMAC-signs it on first /screen"
 
 # ── End-to-end ───────────────────────────────────────────────────────────────

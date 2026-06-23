@@ -39,21 +39,21 @@ const pipeline = [
   <section class="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:space-y-8 sm:px-6 sm:py-10">
     <PageHeader
       icon="pi-info-circle"
-      title="Sobre o HIDRA"
+      title="Sobre o AETHER"
       subtitle="Uma ferramenta que usa inteligência artificial para encontrar materiais que ajudam a gerar hidrogênio."
     />
 
     <SectionCard title="O que faz" icon="pi-bookmark">
       <p class="text-sm leading-relaxed text-surface-700 dark:text-surface-300">
         O hidrogênio é um combustível limpo, mas produzi-lo exige materiais especiais que aceleram a
-        reação. O HIDRA usa inteligência artificial para prever quais materiais funcionam melhor,
+        reação. O AETHER usa inteligência artificial para prever quais materiais funcionam melhor,
         sem precisar testá-los um a um no laboratório. Os melhores materiais prendem o hidrogênio na
         medida certa: nem forte demais, nem fraco demais. Assim, em vez de meses de experimentos, a
         busca leva segundos.
       </p>
       <p class="mt-3 text-sm leading-relaxed text-surface-700 dark:text-surface-300">
         Estes materiais atuam em escala nanométrica (bilionésimos de metro), onde pequenas mudanças
-        na superfície alteram completamente o comportamento. Por isso o HIDRA nasce no campo da
+        na superfície alteram completamente o comportamento. Por isso o AETHER nasce no campo da
         <strong>Nanociência</strong>, que estuda e projeta a matéria nessa escala.
       </p>
     </SectionCard>
@@ -116,7 +116,7 @@ const pipeline = [
 
     <SectionCard title="Projeto acadêmico" icon="pi-graduation-cap">
       <p class="text-sm leading-relaxed text-surface-700 dark:text-surface-300">
-        O HIDRA é fruto de uma dissertação de <strong>mestrado em Nanociências</strong>, unindo
+        O AETHER é fruto de uma dissertação de <strong>mestrado em Nanociências</strong>, unindo
         química de materiais, simulação atômica e inteligência artificial para acelerar a descoberta
         de catalisadores para a produção de hidrogênio.
       </p>

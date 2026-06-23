@@ -1,5 +1,5 @@
 [project]
-name = "HIDRA"
+name = "AETHER"
 version = "0.1.0"
 description = "IA para Descoberta de Catalisadores por Redes em Grafos Atômicos"
 readme = "README.md"

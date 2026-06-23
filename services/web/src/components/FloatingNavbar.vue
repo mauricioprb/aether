@@ -51,9 +51,9 @@ const navbarVisible = computed(
       class="flex w-full max-w-5xl items-center justify-between rounded-2xl border border-surface-200/60 bg-surface-0/80 px-5 py-3 shadow-lg shadow-surface-900/5 backdrop-blur-lg dark:border-surface-700/50 dark:bg-surface-900/75 dark:shadow-surface-950/40"
     >
       <RouterLink to="/" class="flex shrink-0 items-center gap-3" @click="closeMobile">
-        <img src="/logo.svg" alt="HIDRA" class="h-9 w-9 shrink-0" />
+        <img src="/logo.svg" alt="AETHER" class="h-9 w-9 shrink-0" />
         <div class="leading-tight hidden sm:block">
-          <div class="text-sm font-semibold tracking-wide">HIDRA</div>
+          <div class="text-sm font-semibold tracking-wide">AETHER</div>
         </div>
       </RouterLink>
 

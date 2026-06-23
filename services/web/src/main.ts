@@ -22,7 +22,7 @@ const surface = (color: string) => ({
   ...(palette(color) as Record<string, string>),
 });
 
-const HidraPreset = definePreset(Aura, {
+const AetherPreset = definePreset(Aura, {
   semantic: {
     primary: palette(THEME_COLOR),
     colorScheme: {
@@ -49,7 +49,7 @@ app.use(VueQueryPlugin, {
 });
 app.use(PrimeVue, {
   theme: {
-    preset: HidraPreset,
+    preset: AetherPreset,
     options: {
       darkModeSelector: ".dark",
       cssLayer: {

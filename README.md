@@ -1,4 +1,4 @@
-# HIDRA: IA para Descoberta de Catalisadores por Redes em Grafos Atômicos
+# AETHER: AI-Equivariant Tool for Hydrogen Evolution Reaction
 
 ### Predição de catalisadores nanoestruturados para produção de hidrogênio verde via redes neurais de grafos equivariantes
 
@@ -130,8 +130,8 @@ Dois services em `docker-compose.yml`:
 
 | Service | Image                       | Porta | Descrição                                   |
 | ------- | --------------------------- | ----- | ------------------------------------------- |
-| `api`   | `hidra-api:latest` (~7 GB)  | 8000  | FastAPI + ETR + MACE (CPU)                  |
-| `web`   | `hidra-web:latest` (~70 MB) | 5173  | Vue 3 + Nginx servindo SPA + proxy `/api/*` |
+| `api`   | `aether-api:latest` (~7 GB)  | 8000  | FastAPI + ETR + MACE (CPU)                  |
+| `web`   | `aether-web:latest` (~70 MB) | 5173  | Vue 3 + Nginx servindo SPA + proxy `/api/*` |
 
 ```bash
 make docker-build        # builda os 2 (api ~15min, web ~2min na 1ª vez)
