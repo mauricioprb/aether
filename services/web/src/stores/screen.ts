@@ -9,7 +9,7 @@ const DEFAULTS: ScreenRequest = {
   exclude_train: true,
 };
 
-const STORAGE_KEY = "aether.screen.form.v1";
+const STORAGE_KEY = "hidra.screen.form.v1";
 
 function loadPersistedForm(): ScreenRequest {
   if (typeof window === "undefined") return { ...DEFAULTS };

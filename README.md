@@ -1,4 +1,4 @@
-# AETHER (AI-Equivariant Tool for Hydrogen Evolution Research)
+# HIDRA: IA para Descoberta de Catalisadores por Redes em Grafos Atômicos
 
 ### Predição de catalisadores nanoestruturados para produção de hidrogênio verde via redes neurais de grafos equivariantes
 
@@ -42,12 +42,12 @@ Métricas completas + legendas: `results/dissertacao_metrics.md`.
 
 ### Tabela principal (mean ± std, n=5 para não-determinísticos)
 
-| Modelo                               | R² test           |  MAE (eV)         | RMSE (eV)         | # Params |   Tipo   |
-| ------------------------------------ | :---------------: | :---------------: | :---------------: | :------: | :------: |
-| **ETR + MACE embeddings 512**        | **0.9613**        | 0.0714            | 0.1232            |    -     | Híbrido  |
-| **MACE Stage A (frozen + MLP)**      | **0.9564 ± 0.0015** | 0.0706 ± 0.0014 | 0.1309 ± 0.0022 |   328K   |   GNN    |
-| ETR + 10 features handcrafted        | 0.9341            | 0.0955            | 0.1609            |    -     | Baseline |
-| SchNet (do zero)                     | 0.9105 ± 0.0511   | 0.0734 ± 0.0145   | 0.1804 ± 0.0573   |   456K   |   GNN    |
+| Modelo                          |       R² test       |    MAE (eV)     |    RMSE (eV)    | # Params |   Tipo   |
+| ------------------------------- | :-----------------: | :-------------: | :-------------: | :------: | :------: |
+| **ETR + MACE embeddings 512**   |     **0.9613**      |     0.0714      |     0.1232      |    -     | Híbrido  |
+| **MACE Stage A (frozen + MLP)** | **0.9564 ± 0.0015** | 0.0706 ± 0.0014 | 0.1309 ± 0.0022 |   328K   |   GNN    |
+| ETR + 10 features handcrafted   |       0.9341        |     0.0955      |     0.1609      |    -     | Baseline |
+| SchNet (do zero)                |   0.9105 ± 0.0511   | 0.0734 ± 0.0145 | 0.1804 ± 0.0573 |   456K   |   GNN    |
 
 > SchNet std 34× maior que Stage A (0.0511 vs 0.0015) → pré-treino MACE-MP-0
 > fornece prior estável; SchNet sem prior depende de sorte na inicialização.
@@ -84,6 +84,7 @@ make report                 # aggregate + compare + figures
 ```
 
 Toda métrica fica em `results/runs/{timestamp}_{name}/`:
+
 - `config.yaml` - hyperparams
 - `metrics.json` - pacote unificado (R², MAE, RMSE, MDAE, Pearson r, Spearman ρ, sMAPE, MAE meV, % < 43 meV, ...)
 - `predictions.parquet` - colunas `[sid, y_true, y_pred, split]`
@@ -127,10 +128,10 @@ metais informados (pode ter outros). H é sempre adsorbato, ignorado no filtro.
 
 Dois services em `docker-compose.yml`:
 
-| Service | Image | Porta | Descrição |
-| --- | --- | --- | --- |
-| `api` | `aether-api:latest` (~7 GB) | 8000 | FastAPI + ETR + MACE (CPU) |
-| `web` | `aether-web:latest` (~70 MB) | 5173 | Vue 3 + Nginx servindo SPA + proxy `/api/*` |
+| Service | Image                       | Porta | Descrição                                   |
+| ------- | --------------------------- | ----- | ------------------------------------------- |
+| `api`   | `hidra-api:latest` (~7 GB)  | 8000  | FastAPI + ETR + MACE (CPU)                  |
+| `web`   | `hidra-web:latest` (~70 MB) | 5173  | Vue 3 + Nginx servindo SPA + proxy `/api/*` |
 
 ```bash
 make docker-build        # builda os 2 (api ~15min, web ~2min na 1ª vez)
@@ -151,6 +152,7 @@ Acesso após `make docker-up`:
 - OpenAPI docs: <http://localhost:8000/docs>
 
 Volumes montados no container da API:
+
 - `./data` → `/app/data` (read-only) — SQLite + embeddings MACE
 - `./logs/checkpoints` → `/app/logs/checkpoints` (read-only) — MACE Stage A ckpts
 - `./data/model_cache` → `/app/data/model_cache` (writable) — pickle ETR persiste entre restarts
@@ -170,13 +172,13 @@ make api                   # production mode
 
 ### Endpoints
 
-| Método | Rota | Descrição |
-|---|---|---|
-| GET | `/` | metadata da API |
-| GET | `/stats` | n_structures, n_test, elementos + modelos disponíveis |
-| GET | `/elements` | lista de metais |
-| POST | `/screen` | top-N catalisadores ranqueados |
-| GET | `/screen?elements=Pt&top=10&model=etr_emb` | mesmo, GET browser-friendly |
+| Método | Rota                                       | Descrição                                             |
+| ------ | ------------------------------------------ | ----------------------------------------------------- |
+| GET    | `/`                                        | metadata da API                                       |
+| GET    | `/stats`                                   | n_structures, n_test, elementos + modelos disponíveis |
+| GET    | `/elements`                                | lista de metais                                       |
+| POST   | `/screen`                                  | top-N catalisadores ranqueados                        |
+| GET    | `/screen?elements=Pt&top=10&model=etr_emb` | mesmo, GET browser-friendly                           |
 
 ### Exemplo POST
 
@@ -187,6 +189,7 @@ curl -X POST http://localhost:8000/screen \
 ```
 
 Retorno JSON:
+
 ```json
 {
   "elements": ["Ni", "Pt"],
@@ -199,17 +202,18 @@ Retorno JSON:
 ```
 
 Backend (`src/screening.py`) cacheia modelos em 2 níveis:
+
 - **Disco** (`data/model_cache/etr_emb.pkl`): ETR treinado 1x, reutilizado entre processos.
   Fingerprint por SHA-1 dos embeddings → invalida automaticamente se mudarem.
 - **Processo** (`lru_cache`): modelo carregado 1x por processo, sem disk hit por request.
 
 Custos por modelo (sem cache → com pickle):
 
-| Modelo | 1ª request | Requests subsequentes | GPU obrigatória? |
-| --- | --- | --- | --- |
-| `etr_emb` | ~16s (fit + save) → ~2s (load pkl) | ~10ms | NÃO (sklearn CPU) |
-| `stagea` | ~5s (load ckpt) | CPU ~1s/struct • GPU ~25ms/struct | NÃO mas 40× mais rápido |
-| `ensemble` | soma dos 2 | soma dos 2 | depende do `stagea` |
+| Modelo     | 1ª request                         | Requests subsequentes             | GPU obrigatória?        |
+| ---------- | ---------------------------------- | --------------------------------- | ----------------------- |
+| `etr_emb`  | ~16s (fit + save) → ~2s (load pkl) | ~10ms                             | NÃO (sklearn CPU)       |
+| `stagea`   | ~5s (load ckpt)                    | CPU ~1s/struct • GPU ~25ms/struct | NÃO mas 40× mais rápido |
+| `ensemble` | soma dos 2                         | soma dos 2                        | depende do `stagea`     |
 
 Pra deploy CPU-only (HuggingFace Spaces grátis, VPS barato): usar `etr_emb` como
 default. `stagea` opcional pra cross-check.
@@ -242,16 +246,16 @@ uv run python scripts/08b_feature_reduction_sweep.py --feature-set emb
 
 Pooling: `[emb(H), mean(emb(vizinhos<2.4A))]` → 512 features.
 
-| Estratégia   | # feat | R² test |  MAE (eV) | MAE (meV) |
-| ------------ | ------ | ------- | --------- | --------- |
-| all          | 512    | 0.9613  | 0.0714    | 71        |
-| top-100 SHAP | 100    | 0.9611  | 0.0725    | 73        |
-| top-50 SHAP  | 50     | 0.9577  | 0.0765    | 77        |
-| top-20 SHAP  | 20     | 0.9517  | 0.0846    | 85        |
-| top-10 SHAP  | 10     | 0.9397  | 0.0956    | 96        |
-| PCA 99% var  | 77     | 0.9600  | 0.0767    | 77        |
-| PCA 95% var  | 38     | 0.9568  | 0.0791    | 79        |
-| PCA 90% var  | 26     | 0.9562  | 0.0798    | 80        |
+| Estratégia   | # feat | R² test | MAE (eV) | MAE (meV) |
+| ------------ | ------ | ------- | -------- | --------- |
+| all          | 512    | 0.9613  | 0.0714   | 71        |
+| top-100 SHAP | 100    | 0.9611  | 0.0725   | 73        |
+| top-50 SHAP  | 50     | 0.9577  | 0.0765   | 77        |
+| top-20 SHAP  | 20     | 0.9517  | 0.0846   | 85        |
+| top-10 SHAP  | 10     | 0.9397  | 0.0956   | 96        |
+| PCA 99% var  | 77     | 0.9600  | 0.0767   | 77        |
+| PCA 95% var  | 38     | 0.9568  | 0.0791   | 79        |
+| PCA 90% var  | 26     | 0.9562  | 0.0798   | 80        |
 
 SHAP: dimensões do embedding do **H adsorvido** dominam. Sweet spot **top-20**
 (0.952, sem perda significativa); top-50 (0.958) se quiser quase o teto.
@@ -268,16 +272,16 @@ for seed in 42 1 2 3 4; do
 done
 ```
 
-| Estágio  | Backbone | Cabeça          | R² test (n=5)        |  MAE (eV)           | Params | Tempo/seed |
-| -------- | :------: | :-------------: | :------------------: | :-----------------: | :----: | :--------: |
+| Estágio     |  Backbone  |     Cabeça      |    R² test (n=5)    |      MAE (eV)       |  Params  | Tempo/seed  |
+| ----------- | :--------: | :-------------: | :-----------------: | :-----------------: | :------: | :---------: |
 | **Stage A** | **Frozen** | **MLP 2-layer** | **0.9564 ± 0.0015** | **0.0706 ± 0.0014** | **328K** | **~40 min** |
 
 Comparação histórica (1 seed cada, runs anteriores):
 
-| Estágio  | R² test | Status |
-| -------- | ------- | ------ |
-| Stage A+ (frozen + MLP 3-layer + dropout) | 0.945 | run histórico |
-| Stage C (full fine-tune) | 0.940 | run histórico |
+| Estágio                                   | R² test | Status        |
+| ----------------------------------------- | ------- | ------------- |
+| Stage A+ (frozen + MLP 3-layer + dropout) | 0.945   | run histórico |
+| Stage C (full fine-tune)                  | 0.940   | run histórico |
 
 Stage A vence Stage A+ e Stage C nesse dataset - backbone congelado + cabeça
 leve é o sweet spot. Full fine-tune sofre overfit com 5M params em 4220 train.

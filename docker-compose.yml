@@ -3,8 +3,8 @@ services:
     build:
       context: .
       dockerfile: services/api/Dockerfile
-    image: aether-api:latest
-    container_name: aether-api
+    image: hidra-api:latest
+    container_name: hidra-api
     restart: unless-stopped
     expose:
       - "8000"
@@ -30,7 +30,7 @@ services:
       retries: 3
       start_period: 60s
     networks:
-      - aether
+      - hidra
 
   web:
     build:
@@ -38,8 +38,8 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_BASE_URL: /api
-    image: aether-web:latest
-    container_name: aether-web
+    image: hidra-web:latest
+    container_name: hidra-web
     restart: unless-stopped
     ports:
       - "${WEB_BIND:-127.0.0.1}:${WEB_PORT:-5173}:80"
@@ -47,8 +47,8 @@ services:
       api:
         condition: service_healthy
     networks:
-      - aether
+      - hidra
 
 networks:
-  aether:
+  hidra:
     driver: bridge

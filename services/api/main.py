@@ -27,7 +27,7 @@ logging.basicConfig(level=logging.INFO,
 _DOCS_ENABLED = os.environ.get("ENABLE_DOCS", "0") == "1"
 
 app = FastAPI(
-    title="AETHER HER catalyst screening API",
+    title="HIDRA: HER catalyst screening API",
     description=(
         "Screen Catalysis Hub HER catalysts by composition. "
         "Filter by required metal elements, predict ΔG_H with MACE-MP-0 + ETR "

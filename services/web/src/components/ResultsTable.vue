@@ -32,7 +32,7 @@ function chemAccTag(absDg: number) {
 }
 
 function rowClass(row: CandidateRow) {
-  if (row.abs_dG_pred < 0.043) return "aether-row-best";
+  if (row.abs_dG_pred < 0.043) return "hidra-row-best";
   return "";
 }
 
@@ -70,7 +70,7 @@ function downloadCsv() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `aether_${props.result.model}_${props.result.elements.join("-")}_top${props.result.top}.csv`;
+  a.download = `hidra_${props.result.model}_${props.result.elements.join("-")}_top${props.result.top}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -78,7 +78,7 @@ function downloadCsv() {
 
 <template>
   <div
-    class="aether-results overflow-hidden rounded-xl border border-surface-200 bg-surface-0 shadow-sm dark:border-surface-800 dark:bg-surface-950"
+    class="hidra-results overflow-hidden rounded-xl border border-surface-200 bg-surface-0 shadow-sm dark:border-surface-800 dark:bg-surface-950"
   >
     <header
       class="flex flex-col gap-3 border-b border-surface-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 dark:border-surface-800"
@@ -226,20 +226,20 @@ function downloadCsv() {
 </template>
 
 <style>
-.aether-row-best {
+.hidra-row-best {
   background-color: color-mix(in oklab, var(--p-primary-500) 6%, transparent) !important;
 }
 
-.aether-results .p-paginator {
+.hidra-results .p-paginator {
   background: transparent;
   padding: 0.5rem 0.75rem;
   gap: 2px;
 }
-.aether-results .p-paginator .p-paginator-page,
-.aether-results .p-paginator .p-paginator-first,
-.aether-results .p-paginator .p-paginator-prev,
-.aether-results .p-paginator .p-paginator-next,
-.aether-results .p-paginator .p-paginator-last {
+.hidra-results .p-paginator .p-paginator-page,
+.hidra-results .p-paginator .p-paginator-first,
+.hidra-results .p-paginator .p-paginator-prev,
+.hidra-results .p-paginator .p-paginator-next,
+.hidra-results .p-paginator .p-paginator-last {
   min-width: 2rem;
   height: 2rem;
   margin: 0;
@@ -248,7 +248,7 @@ function downloadCsv() {
   align-items: center;
   justify-content: center;
 }
-.aether-results .p-paginator .p-paginator-page.p-paginator-page-selected {
+.hidra-results .p-paginator .p-paginator-page.p-paginator-page-selected {
   background: var(--p-primary-color);
   color: var(--p-primary-contrast-color);
 }

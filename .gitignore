@@ -11,7 +11,7 @@ wheels/
 .env.*
 !.env.example
 
-aether-artifacts.tar.gz
+hidra-artifacts.tar.gz
 
 .ruff_cache/
 .pytest_cache/

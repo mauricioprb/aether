@@ -33,7 +33,7 @@ export const router = createRouter({
 });
 
 router.afterEach((to) => {
-  const base = "AETHER";
+  const base = "HIDRA";
   const title = to.meta.title as string | undefined;
   document.title = title ? `${title} - ${base}` : base;
 });

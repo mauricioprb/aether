@@ -1,7 +1,7 @@
 [project]
-name = "AETHER"
+name = "HIDRA"
 version = "0.1.0"
-description = "AI-Equivariant Tool for Hydrogen Evolution Research"
+description = "IA para Descoberta de Catalisadores por Redes em Grafos Atômicos"
 readme = "README.md"
 authors = [
     { name = "Mauricio", email = "mauprb@gmail.com" }

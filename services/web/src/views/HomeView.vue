@@ -62,7 +62,7 @@ const features = [
     <PageHeader
       stack
       icon="pi-bolt"
-      title="AETHER: materiais para gerar hidrogênio verde"
+      title="HIDRA: materiais para gerar hidrogênio verde"
       subtitle="Usamos inteligência artificial para prever quais materiais funcionam melhor para gerar hidrogênio, um combustível limpo. Os melhores prendem o hidrogênio na medida certa: nem forte, nem fraco demais."
     >
       <template #actions>
@@ -147,7 +147,7 @@ const features = [
             <p class="mt-1 text-sm leading-relaxed text-surface-600 dark:text-surface-300">
               É o hidrogênio produzido a partir da água com energia renovável, sem emitir carbono.
               Pode substituir combustíveis fósseis na indústria e no transporte. O maior gargalo é o
-              custo dos materiais que aceleram a reação, e é aí que o AETHER ajuda: encontrando bons
+              custo dos materiais que aceleram a reação, e é aí que o HIDRA ajuda: encontrando bons
               materiais mais rápido e mais barato.
             </p>
           </div>
@@ -165,7 +165,7 @@ const features = [
             <p class="mt-1 text-sm leading-relaxed text-surface-600 dark:text-surface-300">
               A reação acontece na superfície dos materiais, numa escala de bilionésimos de metro.
               Nessa escala, pequenas mudanças mudam tudo. Estudar e projetar a matéria assim é o
-              trabalho da nanociência e da nanotecnologia, e é o terreno onde o AETHER atua para
+              trabalho da nanociência e da nanotecnologia, e é o terreno onde o HIDRA atua para
               tornar a produção de hidrogênio mais eficiente.
             </p>
           </div>

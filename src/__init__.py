@@ -1,3 +1,3 @@
-"""HER + GNN dissertation, Etapa 1: Catalysis Hub ingest and Extra Trees baseline."""
+"""HIDRA: IA para Descoberta de Catalisadores por Redes em Grafos Atômicos."""
 
 __version__ = "0.1.0"
