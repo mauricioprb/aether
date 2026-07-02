@@ -85,6 +85,7 @@ def extract_features(
 
 
 def delta_g_map(traj_path: str | Path) -> dict[str, float]:
+    """id -> rotulo de treino (dE_H eletronico; chave legada 'delta_G_H')."""
     return {a.info["id"]: float(a.info["delta_G_H"]) for a in Trajectory(str(traj_path))}
 
 

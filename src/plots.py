@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 
 from baseline import BaselineResult
-from plot_style import L, apply_abnt_style, save_fig
+from plot_style import SABATIER_DE_OPT_EV, L, apply_abnt_style, save_fig
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ _PALETTE = {"train": "#4c72b0", "test": "#dd8452", "bar": "#55a868"}
 
 
 def plot_dG_hist(dG: np.ndarray, name: str = "fig3b_dG_hist") -> plt.Figure:
-    """Distribuição de ΔG_H em [-2, 2] eV."""
+    """Distribuição do alvo ΔE_H em [-2, 2] eV, com o ótimo de Sabatier."""
     apply_abnt_style()
     fig, ax = plt.subplots(figsize=(5, 4))
     ax.hist(dG, bins=60, range=(-2, 2), color=_PALETTE["train"], alpha=0.85,
@@ -30,7 +30,9 @@ def plot_dG_hist(dG: np.ndarray, name: str = "fig3b_dG_hist") -> plt.Figure:
     ax.set_xlabel(L["dg"])
     ax.set_ylabel(L["contagem"])
     ax.set_title(f"Energias de adsorção da HER (n={len(dG)})")
-    ax.axvline(0, color="0.4", lw=1, ls="--")
+    ax.axvline(SABATIER_DE_OPT_EV, color="0.2", lw=1.2, ls="--",
+               label=L["otimo_sabatier"])
+    ax.legend(frameon=False, fontsize=9)
     save_fig(fig, name, FIG_DIR)
     return fig
 

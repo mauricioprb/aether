@@ -17,7 +17,7 @@ from analysis.comparison import (
     plot_parity_grid,
     plot_residual_overlay,
 )
-from plot_style import L, apply_abnt_style, save_fig
+from plot_style import SABATIER_DE_OPT_EV, L, apply_abnt_style, save_fig
 
 apply_abnt_style()
 
@@ -86,11 +86,15 @@ def fig5_dg_distribution() -> None:
 
     fig, ax = plt.subplots(figsize=(7, 4))
     ax.hist(dgs, bins=50, color="#6b8ba4", alpha=0.85, edgecolor="white")
-    ax.axvline(0, color="0.3", ls="--", lw=1.5)
+    # O rotulo do dataset e dE_H; o otimo de Sabatier (dG_H = 0) fica em
+    # dE_H = -0.24 eV nesta escala, nao em zero.
+    ax.axvline(SABATIER_DE_OPT_EV, color="0.2", ls="--", lw=1.5,
+               label=L["otimo_sabatier"])
     ax.set_xlabel(L["dg"])
     ax.set_ylabel(L["contagem"])
-    ax.set_title(f"Distribuição de $\\Delta G_{{\\mathrm{{H}}}}$ no conjunto de dados\n"
+    ax.set_title(f"Distribuição de $\\Delta E_{{\\mathrm{{H}}}}$ no conjunto de dados\n"
                  f"N = {len(dgs)} estruturas")
+    ax.legend(frameon=False)
     ax.spines[["top", "right"]].set_visible(False)
     fig.tight_layout()
     save_fig(fig, "fig5_dg_distribution", FIGURES)

@@ -28,6 +28,13 @@ logger = logging.getLogger(__name__)
 
 ModelName = Literal["etr_emb", "stagea", "ensemble"]
 
+# dG_H = dE_H + 0.24 eV (Norskov 2005). O rotulo depositado no Catalysis Hub
+# e a energia ELETRONICA dE_H - verificado em 2026-07-02: (1) cathub/organize.py
+# computa reactionEnergy por diferenca de get_potential_energy() (dE por
+# construcao); (2) Mamun 2019, Eq. (1), define E_ads em energias totais DFT sem
+# ZPE/entropia; (3) H*/Pt(111) no banco = -0.19..-0.31 eV (faixa de dE; como dG
+# contradiria o dG_H(Pt) ~ -0.09 eV canonico). Fontes do dataset usam funcionais
+# distintos (Mamun: BEEF-vdW; Yohannes 2023: VASP/PBE) - declarar na dissertacao.
 SABATIER_CORRECTION_EV = 0.24
 
 SQLITE_PATH = Path("data/metadata.sqlite")

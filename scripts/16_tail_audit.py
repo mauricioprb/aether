@@ -57,9 +57,16 @@ def load_metadata() -> pd.DataFrame | None:
         return None
     conn = sqlite3.connect(SQLITE_PATH)
     try:
+        cols = "id, chemical_formula, facet, site_type, coverage, delta_G_H"
+        have = {r[1] for r in conn.execute("PRAGMA table_info(structures)")}
+        # pub_id/dft_functional só existem em bancos reconstruídos após a
+        # descoberta da heterogeneidade de fontes (Mamun/BEEF-vdW vs
+        # Yohannes/PBE); erros concentrados em uma fonte apontam
+        # incompatibilidade de funcional, não falha do modelo.
+        if "pub_id" in have:
+            cols += ", pub_id, dft_functional"
         return pd.read_sql_query(
-            "SELECT id, chemical_formula, facet, site_type, coverage, delta_G_H "
-            "FROM structures", conn,
+            f"SELECT {cols} FROM structures", conn,
         ).set_index("id")
     finally:
         conn.close()
@@ -119,6 +126,12 @@ def main() -> None:
     meta = load_metadata()
     if meta is not None:
         flagged = flagged.join(meta, how="left")
+        if "pub_id" in meta.columns:
+            per_src = (tab.join(meta[["pub_id", "dft_functional"]], how="left")
+                       .groupby(["pub_id", "dft_functional"])["mean_abs_err"]
+                       .agg(n="count", mae_medio="mean", mae_mediano="median"))
+            print("\nErro (média entre modelos) por fonte do dataset:")
+            print(per_src.to_string(float_format="%.3f"), "\n")
     geo = geometry_checks(flagged.index.tolist())
     if geo is not None:
         flagged = flagged.join(geo, how="left")

@@ -50,6 +50,7 @@ def build_records(
         records.append({
             "id": node["id"],
             "atoms": atoms,
+            # rotulo = reactionEnergy = dE_H eletronico (nome legado; ver ingest)
             "delta_G_H": delta_g,
             "coverage": coverage,
             "site_type": site,
@@ -58,6 +59,8 @@ def build_records(
             "facet": node["facet"],
             "n_atoms": len(atoms),
             "source": source,
+            "pub_id": node.get("pubId", ""),
+            "dft_functional": node.get("dftFunctional", ""),
             "features": features,
         })
         stats["kept"] += 1

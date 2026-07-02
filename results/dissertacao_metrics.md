@@ -1,8 +1,12 @@
 # Métricas
 
-Dataset: 5.860 estruturas HER do Catalysis Hub
+Dataset: 5.860 estruturas HER do Catalysis Hub (fontes: Mamun 2019, QE/BEEF-vdW;
+Yohannes 2023, VASP/PBE)
 Split: 4.220 treino / 468 validação / 1.172 teste (canônico por id, seed=42)
-Target: ΔG_H\* (eV) ∈ [-2, 2]
+Alvo: ΔE_H (eV) ∈ [-2, 2] — energia eletrônica de reação depositada no
+Catalysis Hub (`0.5H2(g) + * -> H*`). ΔG_H = ΔE_H + 0,24 eV (Nørskov 2005)
+entra apenas no critério de Sabatier do screening; por ser constante, não
+altera nenhuma métrica.
 GPU: NVIDIA GeForce RTX 5060 Ti 16 GB
 
 Multi-seed (n=5, seeds 42, 1, 2, 3, 4) reportado como **mean ± std** para modelos
@@ -16,7 +20,7 @@ não-determinísticos. ETR (sklearn) é determinístico per seed.
 | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **ETR**                  | Extremely Randomized Trees (scikit-learn). Modelo de árvore, não é rede neural.                                                                                                                                 |
 | **MACE**                 | Message-passing Atomic Cluster Expansion. GNN equivariante 3D para sistemas atômicos.                                                                                                                           |
-| **MACE-MP-0**            | MACE pré-treinado no Materials Project / Open Catalyst Project (milhões de estruturas).                                                                                                                         |
+| **MACE-MP-0**            | MACE pré-treinado no MPtrj (trajetórias de relaxação do Materials Project; ~1,5 M estruturas). Não inclui OC20.                                                                                                  |
 | **SchNet**               | GNN para materiais treinada do zero (sem pré-treino) nos 5.860 exemplos do Catalysis Hub.                                                                                                                       |
 | **Backbone**             | Corpo principal da rede neural (MACE: message passing + interações equivariantes, 4.7M parâmetros).                                                                                                             |
 | **Cabeça (MLP head)**    | Camadas finais que mapeiam os embeddings de nó → predição de ΔG_H\*.                                                                                                                                            |

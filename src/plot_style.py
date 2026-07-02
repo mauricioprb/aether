@@ -33,10 +33,16 @@ SERIF_CHAIN = [
 ]
 
 # Rótulos centralizados em português (fonte única da verdade).
+# O alvo do modelo é a energia ELETRÔNICA dE_H (rótulo do Catalysis Hub);
+# dG_H = dE_H + 0,24 eV aparece só no contexto de Sabatier/screening.
+SABATIER_DE_OPT_EV = -0.24  # dG_H = 0  <=>  dE_H = -0.24 eV
+
 L = {
-    "dg_dft": r"$\Delta G_{\mathrm{H}}$ DFT (eV)",
-    "dg_pred": r"$\Delta G_{\mathrm{H}}$ predito (eV)",
-    "dg": r"$\Delta G_{\mathrm{H}}$ (eV)",
+    "dg_dft": r"$\Delta E_{\mathrm{H}}$ DFT (eV)",
+    "dg_pred": r"$\Delta E_{\mathrm{H}}$ predito (eV)",
+    "dg": r"$\Delta E_{\mathrm{H}}$ (eV)",
+    "dg_livre": r"$\Delta G_{\mathrm{H}}$ (eV)",
+    "otimo_sabatier": r"ótimo de Sabatier ($\Delta G_{\mathrm{H}} = 0$)",
     "residuo": "Resíduo (eV) = predito $-$ DFT",
     "contagem": "Contagem",
     "frac_teste": "Fração das amostras de teste",

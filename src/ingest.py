@@ -37,6 +37,8 @@ sites
 coverages
 reactants
 products
+pubId
+dftFunctional
 """
 
 _SYSTEMS_BLOCK = """
@@ -224,10 +226,16 @@ def reaction_to_atoms(node: dict[str, Any]) -> Atoms | None:
     atoms = system_to_atoms(sysd["InputFile"])
     atoms.info.update({
         "id": node["id"],
+        # ATENCAO: reactionEnergy do Catalysis Hub e a energia ELETRONICA
+        # dE_H (cathub deriva de get_potential_energy(); Mamun 2019, Eq. 1).
+        # A chave mantem o nome legado "delta_G_H" por compatibilidade com os
+        # artefatos ja gerados; dG_H = dE_H + 0.24 eV entra so no screening.
         "delta_G_H": node["reactionEnergy"],
         "source": "catalysis_hub",
         "composition": node["chemicalComposition"],
         "facet": node["facet"],
+        "pub_id": node.get("pubId", ""),
+        "dft_functional": node.get("dftFunctional", ""),
     })
     return atoms
 

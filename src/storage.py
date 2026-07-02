@@ -32,9 +32,11 @@ CREATE TABLE IF NOT EXISTS structures (
   facet TEXT,
   site_type TEXT,
   coverage REAL,
-  delta_G_H REAL,
+  delta_G_H REAL,  -- energia ELETRONICA dE_H (nome legado; dG = dE + 0.24 eV)
   n_atoms INTEGER,
   source TEXT,
+  pub_id TEXT,
+  dft_functional TEXT,
   traj_index INTEGER,
   lmdb_key INTEGER
 );
@@ -76,6 +78,8 @@ def write_traj(records: list[dict[str, Any]], path: str | Path) -> Path:
                 "source": rec["source"],
                 "site_type": rec["site_type"],
                 "composition": rec["composition"],
+                "pub_id": rec.get("pub_id", ""),
+                "dft_functional": rec.get("dft_functional", ""),
             }
             traj.write(atoms)
     logger.info("wrote %d frames to %s", len(records), path)
@@ -123,12 +127,14 @@ def write_sqlite(records: list[dict[str, Any]], path: str | Path) -> Path:
         conn.executemany(
             """INSERT OR REPLACE INTO structures
                (id, composition, chemical_formula, facet, site_type, coverage,
-                delta_G_H, n_atoms, source, traj_index, lmdb_key)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+                delta_G_H, n_atoms, source, pub_id, dft_functional,
+                traj_index, lmdb_key)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             [
                 (rec["id"], rec["composition"], rec["chemical_formula"], rec["facet"],
                  rec["site_type"], rec["coverage"], rec["delta_G_H"], rec["n_atoms"],
-                 rec["source"], idx, idx)
+                 rec["source"], rec.get("pub_id", ""), rec.get("dft_functional", ""),
+                 idx, idx)
                 for idx, rec in enumerate(records)
             ],
         )

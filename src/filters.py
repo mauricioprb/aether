@@ -1,7 +1,7 @@
 """Dataset filters for HER reactions.
 
 Keep a reaction only if:
-  - delta_G_H in [-2, 2] eV
+  - rotulo (reactionEnergy = dE_H eletronico; nome legado delta_G_H) in [-2, 2] eV
   - H coverage <= 25%
   - shortest H-surface bond in [1.0, 3.0] angstrom (sanity)
 The adsorption site (top/bridge/hollow) is assigned from the H coordination

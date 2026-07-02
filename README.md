@@ -2,8 +2,13 @@
 
 ### Predição de catalisadores nanoestruturados para produção de hidrogênio verde via redes neurais de grafos equivariantes
 
-Dissertação: predição de ΔG_H\* para catalisadores de HER (Hydrogen Evolution
-Reaction). Compara quatro modelos sobre o mesmo dataset (5860 estruturas) e
+Dissertação: predição da energia de adsorção de hidrogênio para catalisadores
+de HER (Hydrogen Evolution Reaction). **Alvo do modelo: ΔE_H** (energia
+eletrônica de reação depositada no Catalysis Hub; verificado no pipeline
+`cathub` e em Mamun 2019, Eq. 1). A energia livre usada no critério de
+Sabatier é ΔG_H = ΔE_H + 0,24 eV (Nørskov 2005), aplicada no screening. Como a
+correção é uma constante, todas as métricas de treino/teste são idênticas nas
+duas escalas. Compara quatro modelos sobre o mesmo dataset (5860 estruturas) e
 split canônico (4220 train / 468 val / 1172 test):
 
 - **ETR + 10 handcrafted** - baseline (descritores eletrônicos/estruturais)
