@@ -56,6 +56,9 @@ def main() -> None:
                         datefmt="%H:%M:%S")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--feature-set", choices=["scalar", "emb"], default="scalar")
+    parser.add_argument("--features-dir", default=None,
+                        help="npz dir (default: data/mace_features; use "
+                             "data/backbone_features/{name} for other backbones)")
     args = parser.parse_args()
 
     if args.feature_set == "scalar":
@@ -68,7 +71,13 @@ def main() -> None:
         grid = {"n_estimators": [300], "max_depth": [None, 20], "min_samples_leaf": [1]}
         do_rfe, do_compose = False, False
 
-    X_train, y_train, X_test, y_test, names, test_ids, train_ids = load_xy(suffix=suffix)
+    load_kwargs = {"suffix": suffix}
+    if args.features_dir:
+        from pathlib import Path
+
+        load_kwargs["mace_dir"] = Path(args.features_dir)
+        prefix = f"etr_{Path(args.features_dir).name}"
+    X_train, y_train, X_test, y_test, names, test_ids, train_ids = load_xy(**load_kwargs)
     logger.info("%s: train=%d test=%d, %d features", prefix, len(X_train), len(X_test), len(names))
 
     color = "#55a868" if suffix == "_emb" else "#dd8452"

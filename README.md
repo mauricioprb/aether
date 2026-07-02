@@ -52,6 +52,42 @@ Métricas completas + legendas: `results/dissertacao_metrics.md`.
 > SchNet std 34× maior que Stage A (0.0511 vs 0.0015) → pré-treino MACE-MP-0
 > fornece prior estável; SchNet sem prior depende de sorte na inicialização.
 
+### Ensembles (média uniforme sobre os runs já logados, sem re-treino)
+
+`make ensemble` combina os runs multi-seed por média das predições no test
+canônico (fonte: `results/ensemble_summary.md`). Nenhum peso é ajustado.
+
+| Ensemble                                | R² test | MAE (eV) | RMSE (eV) |
+| --------------------------------------- | :-----: | :------: | :-------: |
+| ETR + MACE emb (referência, 1 modelo)   | 0.9613  | 0.0714   | 0.1232    |
+| Stage A (média de 5 seeds)              | 0.9584  | 0.0670   | 0.1278    |
+| **SchNet (média de 5 seeds)**           | **0.9734** | 0.0585 | **0.1022** |
+| Stage A + SchNet + ETR emb (11 modelos) | 0.9710  | 0.0560   | 0.1067    |
+
+> Ganho grátis: a média dos 5 seeds do SchNet passa de 0.911 (média individual,
+> alta variância) para **0.9734**, o melhor R² do projeto. O ensemble cancela o
+> ruído de inicialização que penaliza cada seed isolado. Para um blend com pesos
+> ajustados (não uniformes) sem vazar o teste, re-treine o Stage A para logar as
+> predições de validação (já suportado em `scripts/10_finetune_mace.py`); o
+> `scripts/15_ensemble_eval.py` então ajusta pesos por NNLS na validação.
+
+### Split por composição (extrapolação para química inédita)
+
+Além do split aleatório canônico (`data/splits.json`, interpolação), há um
+split agrupado por composição (`data/splits_composition.json`,
+`GroupShuffleSplit`) em que nenhuma composição aparece em treino e teste ao
+mesmo tempo. Mede a generalização para catalisadores de química não vista, o
+protocolo robusto a vazamento. Ambos vivem em `src/data/splits.py`, agora fonte
+única do particionamento train/val/test para todos os modelos.
+
+### Auditoria de cauda
+
+`make tail-audit` (`scripts/16_tail_audit.py`) ranqueia as piores predições do
+teste entre todos os modelos. As ~15 piores estruturas concentram ~59% do MSE;
+as que **todos** os modelos erram por >0.5 eV são suspeitas de curadoria (H
+dessorvido, migração de sítio, rótulos divergentes) e devem ser inspecionadas
+antes de qualquer alegação de teto de exatidão.
+
 ### Glossário
 
 | Termo                | Significado                                                               |
@@ -119,7 +155,14 @@ make screen ELEMENTS="Pt Au" TOP=20 MODEL=etr_emb
 ```
 
 Saída: tabela com `chemical_formula`, `facet`, `site_type`, `dG_pred`,
-`delta_G_H` (DFT real), `abs_dG_pred`, `error_vs_dft`, `id`.
+`dG_dft` (DFT real), `abs_dG_pred`, `error_vs_dft`, `id`.
+
+O Catalysis Hub deposita a energia **eletrônica** de reação (ΔE_H) para
+`0.5H2(g) + * -> H*`. O ótimo de Sabatier é definido na energia **livre**:
+ΔG_H = ΔE_H + 0,24 eV (correção de Nørskov 2005). O modelo é treinado no rótulo
+depositado (ΔE_H) e a correção entra no **ranqueamento**, de modo que
+|ΔG_pred| ≈ 0 aponta o ótimo real, não ΔE ≈ 0. Ajuste com `--dg-correction`
+(use `0` para ranquear no ΔE_H bruto).
 
 Filtro `--elements E1 E2 ...`: retorna estruturas que contêm **todos** os
 metais informados (pode ter outros). H é sempre adsorbato, ignorado no filtro.
@@ -234,6 +277,24 @@ frac_chem_acc                  - fração com |erro| < 43 meV (chemical accuracy
 Toda run salva 4 figuras padronizadas (parity, residual_hist, residual_vs_pred,
 cumulative_error) via `RunLogger.log_standard_figures`.
 
+## Figuras para a dissertação (PT-BR + Times New Roman)
+
+Todas as figuras usam um estilo único (`src/plot_style.py`): rótulos em
+português (fonte única em `L`), fonte serif Times New Roman quando instalada,
+com fallback metric-compatible (Liberation Serif, Nimbus Roman) e, por fim,
+STIX/DejaVu Serif, todas de aparência Times; texto matemático no conjunto
+`stix`. Cada figura sai em **PDF vetorial** (preferido pelo LaTeX/ABNT) e PNG
+300 dpi.
+
+```bash
+make figures-ptbr        # regenera TODAS as figuras (comparação + por-run)
+                         # em PT-BR/Times a partir dos parquets, sem GPU
+```
+
+`scripts/18_render_figures.py` reescreve as figuras dos runs já existentes sem
+re-treino (`--compare` só as fig1-5, `--per-run` só as diagnósticas por run).
+Para inserir no LaTeX, use o PDF: `\includegraphics{figuras/fig1_parity_four_panels.pdf}`.
+
 ## Embeddings de nó do MACE-MP-0
 
 Extrai embeddings invariantes (L=0) do MACE-MP-0 (medium) para cada estrutura,
@@ -259,6 +320,22 @@ Pooling: `[emb(H), mean(emb(vizinhos<2.4A))]` → 512 features.
 
 SHAP: dimensões do embedding do **H adsorvido** dominam. Sweet spot **top-20**
 (0.952, sem perda significativa); top-50 (0.958) se quiser quase o teto.
+
+### Trocar o backbone pré-treinado (MACE-MP-0 → OC20)
+
+O MACE-MP-0 foi pré-treinado em bulk (MPtrj); modelos do Open Catalyst 2020
+viram exatamente adsorbato-sobre-slab, domínio idêntico ao da HER. A extração
+de embeddings agora é agnóstica ao backbone via `src/models/backbones.py`:
+
+```bash
+uv run python scripts/17_extract_backbone_embeddings.py --backbone eqv2_oc20
+uv run python scripts/08b_feature_reduction_sweep.py --feature-set emb \
+    --features-dir data/backbone_features/eqv2_oc20
+```
+
+`BACKBONES` registra `mace_mp_medium`, `mace_mp_small` e `eqv2_oc20`
+(EquiformerV2 via `fairchem-core`, dependência opcional). Comparar
+representações sob o mesmo protocolo ETR vira um loop sobre o registro.
 
 ## Fine-tune do MACE-MP-0 (GNN end-to-end)
 
@@ -331,6 +408,10 @@ Arquitetura GNN/embeddings:
   de métricas + figuras padrão
 - `analysis/comparison.py` - whitelist 4 modelos + tabela cross-model
 - `analysis/multiseed.py` - agregação mean ± std por grupo de seeds
+- `analysis/ensemble.py` - alinha runs por `sid`, média uniforme e blend com
+  pesos ajustados na validação (NNLS), guarda contra drift de split/y_true
+- `models/backbones.py` - registro de backbones pré-treinados (MACE-MP-0,
+  OC20/fairchem) com contrato único de extração de descritores
 
 Notebooks (`01` explora, `02` filtros, `04` grafos, `07` mace smoke,
 `08` mace features EDA) importam de `src/`.
@@ -370,7 +451,9 @@ scripts/       01_download, 02_build_dataset, 03_train_baseline,
                04_build_graphs, 05_train_schnet, 06_compare,
                07_extract_mace_features, 08b_feature_reduction_sweep,
                09_extract_mace_embeddings, 10_finetune_mace,
-               11_figures_dissertacao, 12_aggregate_multiseed
+               11_figures_dissertacao, 12_aggregate_multiseed,
+               15_ensemble_eval, 16_tail_audit,
+               17_extract_backbone_embeddings
 data/          raw, processed (.traj + her_pyg.pt), lmdb, mace_features/, metadata.sqlite
 results/       runs/{ts}_{name}/, summary.json, multiseed_summary.md,
                comparison_table.md, dissertacao_metrics.md, figures/

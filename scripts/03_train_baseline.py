@@ -10,6 +10,7 @@ import logging
 from pathlib import Path
 
 from baseline import CV_FOLDS, PARAM_GRID, RANDOM_STATE, TEST_SIZE, run_baseline
+from data.splits import load_or_create_splits
 from plots import plot_dG_hist, plot_parity, plot_shap_bar
 from storage import load_features_frame
 from training.run_logger import RunLogger
@@ -28,7 +29,8 @@ def main() -> None:
     df = load_features_frame(SQLITE_PATH)
     logger.info("loaded %d rows with features", len(df))
 
-    result = run_baseline(df)
+    splits = load_or_create_splits(sqlite_path=SQLITE_PATH)
+    result = run_baseline(df, splits=splits)
     logger.info("=== TEST METRICS ===")
     for k, v in result.metrics_test.items():
         logger.info("  %-14s = %.6f", k, v)

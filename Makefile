@@ -63,7 +63,20 @@ compare:                    ## Generate cross-model comparison + diagnostic figs
 figures:                    ## Generate dissertation figures (fig1-5).
 	$(PY) scripts/11_figures_dissertacao.py
 
-report: aggregate compare figures ## Run all reporting steps in order.
+figures-ptbr:               ## Re-render ALL figures in PT-BR + Times (PDF+PNG), no GPU.
+	$(PY) scripts/18_render_figures.py
+
+ensemble:                   ## Ensemble/blend logged runs (CPU, seconds).
+	$(PY) scripts/15_ensemble_eval.py
+
+tail-audit:                 ## Rank worst test errors across models (curation).
+	$(PY) scripts/16_tail_audit.py --top 30
+
+BACKBONE ?= eqv2_oc20
+backbone-emb:               ## Extract embeddings from a backbone. Var: BACKBONE.
+	$(PY) scripts/17_extract_backbone_embeddings.py --backbone $(BACKBONE)
+
+report: aggregate compare ensemble figures ## Run all reporting steps in order.
 
 # ── Screening (catalyst recommendation) ──────────────────────────────────────
 screen-help:                ## Show screen.py usage.
@@ -142,5 +155,6 @@ clean-results:              ## Remove all run dirs (KEEPS summary + tables + fig
 .PHONY: help data-download data-build graphs etr-baseline schnet-multiseed \
          mace-features mace-embeddings stagea-multiseed emb-sweep aggregate \
          compare figures report pipeline screen screen-help api api-dev \
+         ensemble tail-audit backbone-emb figures-ptbr \
          docker-build docker-up docker-logs docker-down docker-shell docker-test \
          clean-checkpoints clean-results

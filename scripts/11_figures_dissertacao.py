@@ -8,7 +8,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import numpy as np
 
 from analysis.comparison import (
     WHITELIST,
@@ -18,16 +17,9 @@ from analysis.comparison import (
     plot_parity_grid,
     plot_residual_overlay,
 )
+from plot_style import L, apply_abnt_style, save_fig
 
-plt.rcParams.update({
-    "font.size": 11,
-    "axes.labelsize": 13,
-    "axes.titlesize": 14,
-    "legend.fontsize": 10,
-    "figure.dpi": 150,
-    "savefig.bbox": "tight",
-    "savefig.dpi": 300,
-})
+apply_abnt_style()
 
 RESULTS = Path("results")
 FIGURES = RESULTS / "figures"
@@ -41,9 +33,8 @@ def fig1_parity_four() -> None:
         print("Skipping fig1: no runs available")
         return
     fig = plot_parity_grid(runs)
-    path = FIGURES / "fig1_parity_four_panels.png"
-    fig.savefig(path)
-    print(f"Saved {path}")
+    save_fig(fig, "fig1_parity_four_panels", FIGURES)
+    print("Salvo fig1_parity_four_panels")
     plt.close(fig)
 
 
@@ -54,9 +45,8 @@ def fig2_mae_bar() -> None:
         print("Skipping fig2: no runs available")
         return
     fig = plot_mae_bar(runs)
-    path = FIGURES / "fig2_mae_bar_meV.png"
-    fig.savefig(path)
-    print(f"Saved {path}")
+    save_fig(fig, "fig2_mae_bar_meV", FIGURES)
+    print("Salvo fig2_mae_bar_meV")
     plt.close(fig)
 
 
@@ -67,9 +57,8 @@ def fig3_cumulative_error() -> None:
         print("Skipping fig3: no runs available")
         return
     fig = plot_cumulative_error(runs)
-    path = FIGURES / "fig3_cumulative_error.png"
-    fig.savefig(path)
-    print(f"Saved {path}")
+    save_fig(fig, "fig3_cumulative_error", FIGURES)
+    print("Salvo fig3_cumulative_error")
     plt.close(fig)
 
 
@@ -80,9 +69,8 @@ def fig4_residual_overlay() -> None:
         print("Skipping fig4: no runs available")
         return
     fig = plot_residual_overlay(runs)
-    path = FIGURES / "fig4_residual_overlay.png"
-    fig.savefig(path)
-    print(f"Saved {path}")
+    save_fig(fig, "fig4_residual_overlay", FIGURES)
+    print("Salvo fig4_residual_overlay")
     plt.close(fig)
 
 
@@ -99,14 +87,14 @@ def fig5_dg_distribution() -> None:
     fig, ax = plt.subplots(figsize=(7, 4))
     ax.hist(dgs, bins=50, color="#6b8ba4", alpha=0.85, edgecolor="white")
     ax.axvline(0, color="0.3", ls="--", lw=1.5)
-    ax.set_xlabel(r"$\Delta G_{\mathrm{H}^*}$ (eV)")
-    ax.set_ylabel("Frequência")
-    ax.set_title(f"Distribuição de ΔG_H* no dataset\nN = {len(dgs)} estruturas")
+    ax.set_xlabel(L["dg"])
+    ax.set_ylabel(L["contagem"])
+    ax.set_title(f"Distribuição de $\\Delta G_{{\\mathrm{{H}}}}$ no conjunto de dados\n"
+                 f"N = {len(dgs)} estruturas")
     ax.spines[["top", "right"]].set_visible(False)
     fig.tight_layout()
-    path = FIGURES / "fig5_dg_distribution.png"
-    fig.savefig(path)
-    print(f"Saved {path}")
+    save_fig(fig, "fig5_dg_distribution", FIGURES)
+    print("Salvo fig5_dg_distribution")
     plt.close(fig)
 
 

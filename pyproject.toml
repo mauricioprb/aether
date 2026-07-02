@@ -35,9 +35,10 @@ dependencies = [
     "umap-learn>=0.5.12",
 ]
 
-[build-system]
-requires = ["uv_build>=0.11.13,<0.12.0"]
-build-backend = "uv_build"
+# Flat src/ layout com PYTHONPATH=src (ver Makefile); o projeto não é um pacote
+# instalável. Sem isto, `uv sync` falha procurando src/aether/__init__.py.
+[tool.uv]
+package = false
 
 [dependency-groups]
 dev = [

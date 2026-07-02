@@ -18,7 +18,7 @@ from torch.utils.data import Dataset
 from torch_geometric.data import Data
 from tqdm import tqdm
 
-from data.splits import load_or_create_splits
+from data.splits import three_way_split
 from geometry import adsorbate_indices, central_indices
 
 logger = logging.getLogger(__name__)
@@ -137,16 +137,10 @@ class MACEDataset(Dataset):
 def three_way_split_mace(
     seed: int = 42, val_frac: float = 0.1,
 ) -> dict[str, list[str]]:
-    """Same train/val/test partition as the SchNet run (canonical split)."""
-    splits = load_or_create_splits()
-    train_ids, test_ids = splits["train"], splits["test"]
+    """Canonical train/val/test partition - delegates to ``data.splits``.
 
-    rng = torch.Generator().manual_seed(seed)
-    perm = torch.randperm(len(train_ids), generator=rng).tolist()
-    n_val = int(len(train_ids) * val_frac)
-    val_sel = {train_ids[k] for k in perm[:n_val]}
-    return {
-        "train": [i for i in train_ids if i not in val_sel],
-        "val": [i for i in train_ids if i in val_sel],
-        "test": test_ids,
-    }
+    Historical note: this used to carve val with a torch RNG while the
+    embedding pipeline used numpy, so the two saw different val subsets
+    (same test set). Unified on the numpy implementation.
+    """
+    return three_way_split(seed=seed, val_frac=val_frac)

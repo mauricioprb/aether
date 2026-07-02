@@ -8,7 +8,7 @@ import numpy as np
 from ase.io import Trajectory
 from tqdm import tqdm
 
-from data.splits import load_or_create_splits
+from data.splits import three_way_split  # noqa: F401  (re-export: canonical split)
 from geometry import adsorbate_indices, central_indices
 from storage import assign_tags
 
@@ -37,22 +37,6 @@ class MACEFeatures:
         path.parent.mkdir(parents=True, exist_ok=True)
         np.savez(path, ids=self.ids, X=self.X, y=self.y,
                  feature_names=np.array(self.feature_names))
-
-
-def three_way_split(seed: int = 42, val_frac: float = 0.1) -> dict[str, list[str]]:
-    """Reproduce Etapa 2's train/val/test partition: test = canonical test,
-    val carved from canonical train with the same rng as SchNet training."""
-    splits = load_or_create_splits()
-    train_ids, test_ids = splits["train"], splits["test"]
-    rng = np.random.default_rng(seed)
-    perm = rng.permutation(len(train_ids))
-    n_val = int(len(train_ids) * val_frac)
-    val_sel = {train_ids[k] for k in perm[:n_val]}
-    return {
-        "train": [i for i in train_ids if i not in val_sel],
-        "val": [i for i in train_ids if i in val_sel],
-        "test": test_ids,
-    }
 
 
 def structure_features(atoms, calculator, cutoff_neighbors: float = 2.4) -> np.ndarray:

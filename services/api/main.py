@@ -71,6 +71,9 @@ class ScreenRequest(BaseModel):
     exclude_train: bool = Field(default=False,
                                   description="Restrict to canonical test set "
                                               "(1172 IDs) to avoid memorised picks")
+    dg_correction: float = Field(default=0.24, ge=-1.0, le=1.0,
+                                   description="ΔG_H = ΔE_H + corr (eV); "
+                                               "0.24 = Nørskov 2005, 0 = raw ΔE_H")
 
 
 class CandidateRow(BaseModel):
@@ -81,7 +84,9 @@ class CandidateRow(BaseModel):
     site_type: str
     coverage: float | None = None
     delta_G_H: float
+    dE_pred: float
     dG_pred: float
+    dG_dft: float
     abs_dG_pred: float
     error_vs_dft: float
     dG_pred_etr: float | None = None
@@ -94,6 +99,7 @@ class ScreenResponse(BaseModel):
     top: int
     exclude_train: bool
     n_candidates: int
+    dg_correction: float
     rows: list[CandidateRow]
 
 
@@ -240,7 +246,8 @@ def screen_endpoint(req: ScreenRequest):
     """Run screening with the given query and return ranked top-N candidates."""
     try:
         result = screen(elements=req.elements, top=req.top,
-                        model=req.model, exclude_train=req.exclude_train)
+                        model=req.model, exclude_train=req.exclude_train,
+                        dg_correction=req.dg_correction)
     except FileNotFoundError as exc:
         logger.error("screen artifact missing: %s", exc)
         raise HTTPException(status_code=503, detail="service temporarily unavailable")
@@ -258,7 +265,9 @@ def screen_get(
     top: int = Query(10, ge=1, le=500),
     model: Literal["etr_emb", "stagea", "ensemble"] = Query("etr_emb"),
     exclude_train: bool = Query(False),
+    dg_correction: float = Query(0.24, ge=-1.0, le=1.0),
 ):
     """GET variant of /screen (browser-friendly)."""
     return screen_endpoint(ScreenRequest(elements=elements, top=top,
-                                           model=model, exclude_train=exclude_train))
+                                           model=model, exclude_train=exclude_train,
+                                           dg_correction=dg_correction))

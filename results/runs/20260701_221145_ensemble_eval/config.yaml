@@ -1,0 +1,33 @@
+ensembles:
+  stagea_ens5:
+  - mace_ft_stageA_v2_seed42
+  - mace_ft_stageA_v2_seed1
+  - mace_ft_stageA_v2_seed2
+  - mace_ft_stageA_v2_seed3
+  - mace_ft_stageA_v2_seed4
+  schnet_ens5:
+  - schnet_v2_seed42
+  - schnet_v2_seed1
+  - schnet_v2_seed2
+  - schnet_v2_seed3
+  - schnet_v2_seed4
+  stagea_ens5+etr_emb:
+  - mace_ft_stageA_v2_seed42
+  - mace_ft_stageA_v2_seed1
+  - mace_ft_stageA_v2_seed2
+  - mace_ft_stageA_v2_seed3
+  - mace_ft_stageA_v2_seed4
+  - etr_emb_all
+  stagea_ens5+schnet_ens5+etr_emb:
+  - mace_ft_stageA_v2_seed42
+  - mace_ft_stageA_v2_seed1
+  - mace_ft_stageA_v2_seed2
+  - mace_ft_stageA_v2_seed3
+  - mace_ft_stageA_v2_seed4
+  - schnet_v2_seed42
+  - schnet_v2_seed1
+  - schnet_v2_seed2
+  - schnet_v2_seed3
+  - schnet_v2_seed4
+  - etr_emb_all
+weighting: uniform (no fitting)

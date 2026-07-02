@@ -48,16 +48,32 @@ def metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, float]:
 
 
 def run_baseline(df: pd.DataFrame, features: list[str] | None = None,
-                 grid: dict[str, list] | None = None) -> BaselineResult:
-    """Split, tune via 10-fold CV, evaluate on test. Returns a ``BaselineResult``."""
+                 grid: dict[str, list] | None = None,
+                 splits: dict[str, list[str]] | None = None) -> BaselineResult:
+    """Tune via 10-fold CV, evaluate on test. Returns a ``BaselineResult``.
+
+    ``splits`` (id -> partition, from ``data.splits``) is the canonical path;
+    the positional ``train_test_split`` fallback only coincides with it when
+    ``df`` arrives in the exact row order used to create ``splits.json``.
+    """
     features = features or list(FEATURE_NAMES)
     grid = grid or PARAM_GRID
 
     X = df[features].copy()
     y = df["delta_G_H"].to_numpy()
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=TEST_SIZE, random_state=RANDOM_STATE
-    )
+    if splits is not None:
+        ids = df["id"].astype(str)
+        train_mask = ids.isin(set(map(str, splits["train"])))
+        test_mask = ids.isin(set(map(str, splits["test"])))
+        if not (train_mask | test_mask).all():
+            logger.warning("%d rows in df missing from splits - dropped",
+                           int((~(train_mask | test_mask)).sum()))
+        X_train, X_test = X[train_mask], X[test_mask]
+        y_train, y_test = y[train_mask.to_numpy()], y[test_mask.to_numpy()]
+    else:
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=TEST_SIZE, random_state=RANDOM_STATE
+        )
     logger.info("train=%d test=%d features=%d", len(X_train), len(X_test), len(features))
 
     search = GridSearchCV(

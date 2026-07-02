@@ -69,12 +69,14 @@ class RunLogger:
     def log_standard_figures(self, y_true, y_pred, model_label: str,
                               color: str = "#4c72b0") -> None:
         """Save the 4 diagnostic figures (parity, residual hist, residual vs pred,
-        cumulative error). Same set for every model -> apples-to-apples comparison."""
-        from training.evaluate import standard_figures
+        cumulative error) in PT-BR/Times, as vector PDF + 300-dpi PNG."""
         import matplotlib.pyplot as plt
+
+        from plot_style import save_fig
+        from training.evaluate import standard_figures
         figs = standard_figures(y_true, y_pred, model_label=model_label, color=color)
         for name, fig in figs.items():
-            self.log_figure(fig, name)
+            save_fig(fig, Path(name).stem, self.run_dir / "figures")
             plt.close(fig)
 
     def _write_env(self) -> None:

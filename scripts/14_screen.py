@@ -34,6 +34,9 @@ def parse_args() -> argparse.Namespace:
                    help="Predictor model")
     p.add_argument("--exclude-train", action="store_true",
                    help="Restrict candidates to canonical test set (no train leakage)")
+    p.add_argument("--dg-correction", type=float, default=None,
+                   help="ΔG_H = ΔE_H + corr (eV). Default: 0.24 (Nørskov 2005); "
+                        "use 0 to rank on raw ΔE_H")
     p.add_argument("--output", default=None,
                    help="Optional CSV output path")
     return p.parse_args()
@@ -44,15 +47,16 @@ def main() -> None:
                         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
                         datefmt="%H:%M:%S")
     args = parse_args()
+    kwargs = {} if args.dg_correction is None else {"dg_correction": args.dg_correction}
     result = screen(elements=args.elements, top=args.top, model=args.model,
-                     exclude_train=args.exclude_train)
+                     exclude_train=args.exclude_train, **kwargs)
 
     if result.n_candidates == 0:
         print(f"No structures contain all of {result.elements}.")
         return
 
     out = pd.DataFrame(result.rows)
-    cols = ["chemical_formula", "facet", "site_type", "dG_pred", "delta_G_H",
+    cols = ["chemical_formula", "facet", "site_type", "dG_pred", "dG_dft",
             "abs_dG_pred", "error_vs_dft", "id"]
     if args.model == "ensemble":
         cols.insert(4, "dG_pred_etr")
@@ -64,7 +68,7 @@ def main() -> None:
     pd.set_option("display.max_colwidth", 40)
     print(f"\nTop {args.top} candidates (elements: {result.elements}, "
           f"model: {result.model}, n_candidates={result.n_candidates}, "
-          f"ranked by |ΔG_H_pred|):\n")
+          f"ranked by |ΔG_H_pred|, ΔG = ΔE + {result.dg_correction:.2f} eV):\n")
     print(out.to_string(index=False))
 
     if args.output:

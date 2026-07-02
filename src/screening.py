@@ -28,6 +28,8 @@ logger = logging.getLogger(__name__)
 
 ModelName = Literal["etr_emb", "stagea", "ensemble"]
 
+SABATIER_CORRECTION_EV = 0.24
+
 SQLITE_PATH = Path("data/metadata.sqlite")
 MACE_DIR = Path("data/mace_features")
 SPLITS_PATH = Path("data/splits.json")
@@ -241,36 +243,46 @@ class ScreenResult:
     top: int
     exclude_train: bool
     n_candidates: int
+    dg_correction: float
     rows: list[dict]  # one dict per top-N row
 
 
 def screen(elements: list[str], top: int = 10, model: ModelName = "etr_emb",
-            exclude_train: bool = False) -> ScreenResult:
-    """Filter dataset by ``elements``, predict ΔG_H, rank by |ΔG_H_pred|."""
+            exclude_train: bool = False,
+            dg_correction: float = SABATIER_CORRECTION_EV) -> ScreenResult:
+    """Filter dataset by ``elements``, predict, rank by |ΔG_H_pred|.
+
+    Predictions live in label space (ΔE_H); ``dg_correction`` converts to
+    ΔG_H for the Sabatier ranking. Pass 0.0 to rank on raw ΔE_H.
+    """
     required = {e.capitalize() for e in elements}
     df = load_full_dataset()
     candidates = filter_candidates(df, required, exclude_train=exclude_train)
     if candidates.empty:
         return ScreenResult(elements=sorted(required), model=model, top=top,
-                             exclude_train=exclude_train, n_candidates=0, rows=[])
+                             exclude_train=exclude_train, n_candidates=0,
+                             dg_correction=dg_correction, rows=[])
 
     candidates = candidates.copy()
     ids = candidates["id"].tolist()
     if model == "ensemble":
         p_etr = predict_etr_emb(ids)
         p_sa = predict_stagea(ids)
-        candidates["dG_pred_etr"] = p_etr
-        candidates["dG_pred_stagea"] = p_sa
-        candidates["dG_pred"] = 0.5 * (p_etr + p_sa)
+        candidates["dE_pred"] = 0.5 * (p_etr + p_sa)
+        candidates["dG_pred_etr"] = p_etr + dg_correction
+        candidates["dG_pred_stagea"] = p_sa + dg_correction
     else:
-        candidates["dG_pred"] = predict(ids, model)
+        candidates["dE_pred"] = predict(ids, model)
 
+    # error is measured in label space (model vs DFT, both without correction)
+    candidates["error_vs_dft"] = candidates["dE_pred"] - candidates["delta_G_H"]
+    candidates["dG_pred"] = candidates["dE_pred"] + dg_correction
+    candidates["dG_dft"] = candidates["delta_G_H"] + dg_correction
     candidates["abs_dG_pred"] = candidates["dG_pred"].abs()
-    candidates["error_vs_dft"] = candidates["dG_pred"] - candidates["delta_G_H"]
     top_df = candidates.sort_values("abs_dG_pred").head(top).reset_index(drop=True)
 
     return ScreenResult(
         elements=sorted(required), model=model, top=top,
         exclude_train=exclude_train, n_candidates=len(candidates),
-        rows=top_df.to_dict(orient="records"),
+        dg_correction=dg_correction, rows=top_df.to_dict(orient="records"),
     )

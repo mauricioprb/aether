@@ -16,6 +16,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from plot_style import L, apply_abnt_style
+
 logger = logging.getLogger(__name__)
 
 CHEM_ACCURACY_EV = 0.043
@@ -28,10 +30,10 @@ RESULTS = Path("results")
 #   SchNet 5 seeds mean = 0.9105 -> seed=2 (R²=0.8991) most representative
 #   Stage A 5 seeds mean = 0.9564 -> seed=3 (R²=0.9562) most representative
 WHITELIST: list[tuple[str, str, str, str | None]] = [
-    ("ETR + 10 handcrafted",  "etr_baseline",             "#dd8452", None),
+    ("ETR + 10 descritores",  "etr_baseline",             "#dd8452", None),
     ("SchNet (do zero)",      "schnet_v2_seed2",          "#c44e52", "schnet_v2"),
-    ("MACE Stage A (GNN)",    "mace_ft_stageA_v2_seed3",  "#4c72b0", "mace_ft_stageA_v2"),
-    ("ETR + MACE emb 512",    "etr_emb_all",              "#55a868", None),
+    ("MACE Estágio A (GNN)",  "mace_ft_stageA_v2_seed3",  "#4c72b0", "mace_ft_stageA_v2"),
+    ("ETR + emb. MACE 512",   "etr_emb_all",              "#55a868", None),
 ]
 
 METRIC_COLS: list[tuple[str, str]] = [
@@ -156,6 +158,7 @@ def comparison_table(runs: list[ModelRun]) -> str:
 
 
 def plot_parity_grid(runs: list[ModelRun]) -> plt.Figure:
+    apply_abnt_style()
     n = len(runs)
     fig, axes = plt.subplots(1, n, figsize=(5 * n, 5))
     if n == 1:
@@ -177,8 +180,8 @@ def plot_parity_grid(runs: list[ModelRun]) -> plt.Figure:
                 transform=ax.transAxes, va="top", fontsize=9,
                 bbox={"boxstyle": "round", "fc": "white", "ec": "0.8"})
         ax.set_title(r.display)
-        ax.set_xlabel(r"DFT $\Delta G_{\mathrm{H}}$ (eV)")
-        ax.set_ylabel(r"predicted $\Delta G_{\mathrm{H}}$ (eV)")
+        ax.set_xlabel(L["dg_dft"])
+        ax.set_ylabel(L["dg_pred"])
         ax.set_aspect("equal", "box")
         ax.spines[["top", "right"]].set_visible(False)
     fig.tight_layout()
@@ -186,16 +189,17 @@ def plot_parity_grid(runs: list[ModelRun]) -> plt.Figure:
 
 
 def plot_cumulative_error(runs: list[ModelRun]) -> plt.Figure:
+    apply_abnt_style()
     fig, ax = plt.subplots(figsize=(7, 5))
     for r in runs:
         abs_err = np.sort(np.abs(r.y_pred - r.y_true))
         frac = np.arange(1, len(abs_err) + 1) / len(abs_err)
         ax.plot(abs_err, frac, lw=2, color=r.color, label=r.display)
     ax.axvline(CHEM_ACCURACY_EV, color="0.4", lw=1, ls=":",
-               label="chem. accuracy (43 meV)")
-    ax.set_xlabel("|error| threshold (eV)")
-    ax.set_ylabel("fração de amostras teste")
-    ax.set_title("Cumulative error curve")
+               label=L["acuracia_quimica"])
+    ax.set_xlabel(L["limiar_erro"])
+    ax.set_ylabel(L["frac_teste"])
+    ax.set_title("Curva de erro acumulado")
     ax.set_ylim(0, 1.02)
     ax.spines[["top", "right"]].set_visible(False)
     ax.legend(loc="lower right", fontsize=9, frameon=False)
@@ -204,14 +208,15 @@ def plot_cumulative_error(runs: list[ModelRun]) -> plt.Figure:
 
 
 def plot_residual_overlay(runs: list[ModelRun]) -> plt.Figure:
+    apply_abnt_style()
     fig, ax = plt.subplots(figsize=(7, 4.5))
     for r in runs:
         err = r.y_pred - r.y_true
         ax.hist(err, bins=60, alpha=0.45, color=r.color, label=r.display,
                 edgecolor="white", linewidth=0.2)
     ax.axvline(0, color="0.3", lw=1, ls="--")
-    ax.set_xlabel("residual (eV) = predito - DFT")
-    ax.set_ylabel("count")
+    ax.set_xlabel(L["residuo"])
+    ax.set_ylabel(L["contagem"])
     ax.set_title("Distribuição de erros")
     ax.legend(fontsize=9, frameon=False)
     ax.spines[["top", "right"]].set_visible(False)
@@ -221,6 +226,7 @@ def plot_residual_overlay(runs: list[ModelRun]) -> plt.Figure:
 
 def plot_mae_bar(runs: list[ModelRun]) -> plt.Figure:
     """Horizontal bar of MAE (meV). Multi-seed models use mean ± std with error bars."""
+    apply_abnt_style()
     fig, ax = plt.subplots(figsize=(8.5, 3.5))
     runs_rev = list(runs)[::-1]
     names = [r.display for r in runs_rev]
@@ -243,12 +249,12 @@ def plot_mae_bar(runs: list[ModelRun]) -> plt.Figure:
             labels.append(f"{v:.0f} meV")
     bars = ax.barh(names, mae_means, color=colors, height=0.55,
                     xerr=mae_stds, error_kw={"ecolor": "0.3", "capsize": 4})
-    ax.axvline(43, color="0.4", ls=":", lw=1, label="chemical accuracy (43 meV)")
+    ax.axvline(43, color="0.4", ls=":", lw=1, label=L["acuracia_quimica"])
     for bar, lbl, std in zip(bars, labels, mae_stds, strict=True):
         ax.text(bar.get_width() + std + 2, bar.get_y() + bar.get_height() / 2,
                 lbl, va="center", fontsize=9)
-    ax.set_xlabel("MAE (meV)")
-    ax.set_title("MAE no test - menor é melhor (mean ± std para multi-seed)")
+    ax.set_xlabel(L["mae_meV"])
+    ax.set_title("MAE no teste, menor é melhor (média ± desvio para multi-seed)")
     ax.legend(loc="lower right", frameon=False, fontsize=9)
     ax.spines[["top", "right"]].set_visible(False)
     fig.tight_layout()

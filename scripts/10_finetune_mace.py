@@ -207,11 +207,21 @@ def main() -> None:
             "elapsed_sec": train_seconds,
         })
         run.log_predictions(y_true, y_pred, "test", sid=test_ds.sids)
+
+        model.eval().cuda()
+        val_pred, val_true = [], []
+        with torch.no_grad():
+            for batch in val_loader:
+                batch = batch.cuda()
+                val_pred.extend(model(batch).cpu().tolist())
+                val_true.extend(batch.y.view(-1).cpu().tolist())
+        run.log_predictions(np.array(val_true), np.array(val_pred), "val",
+                            sid=val_ds.sids)
+
         run.log_standard_figures(y_true, y_pred,
                                   model_label=f"MACE {args.run_name}",
                                   color="#4c72b0")
 
-        # Save embeddings from test set
         model.eval().cuda()
         emb_list, emb_y = [], []
         for batch in test_loader:

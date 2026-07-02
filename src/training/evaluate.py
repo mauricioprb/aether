@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
+from plot_style import L, apply_abnt_style
+
 CHEM_ACCURACY_EV = 0.043  # ~1 kcal/mol; standard chemical accuracy threshold
 
 
@@ -56,11 +58,12 @@ def _metrics_text_box(m: dict[str, float]) -> str:
         f"RMSE = {m['rmse']:.3f} eV\n"
         f"MDAE = {m['mdae']:.3f} eV\n"
         f"$\\rho_s$ = {m['spearman_rho']:.3f}\n"
-        f"% < 43 meV = {100 * m['frac_chem_acc']:.1f}%"
+        f"% $<$ 43 meV = {100 * m['frac_chem_acc']:.1f}\\%"
     )
 
 
-def parity_figure(y_true, y_pred, title: str = "parity", color: str = "#4c72b0") -> plt.Figure:
+def parity_figure(y_true, y_pred, title: str = "Paridade", color: str = "#4c72b0") -> plt.Figure:
+    apply_abnt_style()
     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
     m = metrics_from_preds(y_true, y_pred)
     fig, ax = plt.subplots(figsize=(5, 5))
@@ -69,8 +72,8 @@ def parity_figure(y_true, y_pred, title: str = "parity", color: str = "#4c72b0")
     ax.plot([lo, hi], [lo, hi], color="0.3", lw=1, ls="--")
     ax.text(0.04, 0.96, _metrics_text_box(m), transform=ax.transAxes, va="top",
             fontsize=9, bbox={"boxstyle": "round", "fc": "white", "ec": "0.8"})
-    ax.set_xlabel(r"DFT $\Delta G_{\mathrm{H}}$ (eV)")
-    ax.set_ylabel(r"predicted $\Delta G_{\mathrm{H}}$ (eV)")
+    ax.set_xlabel(L["dg_dft"])
+    ax.set_ylabel(L["dg_pred"])
     ax.set_title(title)
     ax.set_aspect("equal", "box")
     ax.spines[["top", "right"]].set_visible(False)
@@ -78,17 +81,18 @@ def parity_figure(y_true, y_pred, title: str = "parity", color: str = "#4c72b0")
     return fig
 
 
-def residual_hist_figure(y_true, y_pred, title: str = "residual histogram",
+def residual_hist_figure(y_true, y_pred, title: str = "Histograma de resíduos",
                           color: str = "#4c72b0") -> plt.Figure:
+    apply_abnt_style()
     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
     err = y_pred - y_true
     fig, ax = plt.subplots(figsize=(6, 4))
     ax.hist(err, bins=60, color=color, alpha=0.85, edgecolor="white", linewidth=0.3)
     ax.axvline(0, color="0.3", lw=1, ls="--")
-    ax.axvline(CHEM_ACCURACY_EV, color="0.5", lw=1, ls=":", label="chemical accuracy")
+    ax.axvline(CHEM_ACCURACY_EV, color="0.5", lw=1, ls=":", label=L["acuracia_quimica"])
     ax.axvline(-CHEM_ACCURACY_EV, color="0.5", lw=1, ls=":")
-    ax.set_xlabel("residual (eV) = predicted - DFT")
-    ax.set_ylabel("count")
+    ax.set_xlabel(L["residuo"])
+    ax.set_ylabel(L["contagem"])
     ax.set_title(title)
     ax.legend(frameon=False, fontsize=9)
     ax.spines[["top", "right"]].set_visible(False)
@@ -96,31 +100,33 @@ def residual_hist_figure(y_true, y_pred, title: str = "residual histogram",
     return fig
 
 
-def residual_vs_pred_figure(y_true, y_pred, title: str = "residual vs predicted",
+def residual_vs_pred_figure(y_true, y_pred, title: str = "Resíduo vs. predito",
                              color: str = "#4c72b0") -> plt.Figure:
+    apply_abnt_style()
     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
     err = y_pred - y_true
     fig, ax = plt.subplots(figsize=(6, 4))
     ax.scatter(y_pred, err, s=12, alpha=0.5, color=color, edgecolors="none")
     ax.axhline(0, color="0.3", lw=1, ls="--")
-    ax.set_xlabel(r"predicted $\Delta G_{\mathrm{H}}$ (eV)")
-    ax.set_ylabel("residual (eV)")
+    ax.set_xlabel(L["dg_pred"])
+    ax.set_ylabel(L["residuo"])
     ax.set_title(title)
     ax.spines[["top", "right"]].set_visible(False)
     fig.tight_layout()
     return fig
 
 
-def cumulative_error_figure(y_true, y_pred, title: str = "cumulative error",
+def cumulative_error_figure(y_true, y_pred, title: str = "Erro acumulado",
                              color: str = "#4c72b0") -> plt.Figure:
+    apply_abnt_style()
     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
     abs_err = np.sort(np.abs(y_pred - y_true))
     frac = np.arange(1, len(abs_err) + 1) / len(abs_err)
     fig, ax = plt.subplots(figsize=(6, 4))
     ax.plot(abs_err, frac, color=color, lw=2)
-    ax.axvline(CHEM_ACCURACY_EV, color="0.5", lw=1, ls=":", label="chemical accuracy (43 meV)")
-    ax.set_xlabel("|error| threshold (eV)")
-    ax.set_ylabel("fraction of test samples")
+    ax.axvline(CHEM_ACCURACY_EV, color="0.5", lw=1, ls=":", label=L["acuracia_quimica"])
+    ax.set_xlabel(L["limiar_erro"])
+    ax.set_ylabel(L["frac_teste"])
     ax.set_title(title)
     ax.legend(frameon=False, fontsize=9)
     ax.spines[["top", "right"]].set_visible(False)
