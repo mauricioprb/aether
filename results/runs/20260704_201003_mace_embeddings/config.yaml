@@ -1,0 +1,8 @@
+model: MACE-MP-0 medium
+kind: invariant_node_embeddings
+pooling: '[emb(H), mean(emb(neighbors))]'
+dim: 512
+cutoff_neighbors: 2.4
+n_train: 4220
+n_val: 468
+n_test: 1172

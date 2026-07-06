@@ -12,45 +12,45 @@ const stats = useStats();
 
 const results = [
   {
-    name: "Método rápido",
-    value: "96%",
-    meta: "o mais certeiro, resposta em segundos",
+    name: "ETR + embeddings",
+    value: "R² 0,96",
+    meta: "árvores sobre a representação do MACE-MP-0",
     best: true,
   },
   {
-    name: "Método detalhado",
-    value: "96%",
-    meta: "analisa a estrutura completa do material",
+    name: "MACE (cabeça)",
+    value: "R² 0,96",
+    meta: "cabeça de regressão sobre o MACE-MP-0 congelado",
     best: false,
   },
   {
-    name: "Método simples",
-    value: "93%",
-    meta: "usa poucas características do material",
+    name: "ETR + descritores",
+    value: "R² 0,93",
+    meta: "dez descritores físico-químicos",
     best: false,
   },
-  { name: "Método experimental", value: "91%", meta: "aprende tudo do zero", best: false },
+  { name: "SchNet", value: "R² 0,91", meta: "GNN treinada do zero", best: false },
 ];
 
 const features = [
   {
     icon: "pi-search",
-    title: "Encontre materiais",
-    text: "Escolha os elementos químicos que te interessam e veja os materiais mais promissores, do melhor ao pior.",
+    title: "Triagem",
+    text: "Selecione os elementos da composição e ranqueie os candidatos pela proximidade do ótimo de Sabatier.",
     to: "/screen",
-    cta: "Começar busca",
+    cta: "Iniciar triagem",
   },
   {
     icon: "pi-chart-bar",
-    title: "Compare os métodos",
-    text: "Veja qual método de inteligência artificial acerta mais nas previsões e por quê.",
+    title: "Comparação de modelos",
+    text: "Confronte os quatro modelos sob o mesmo conjunto de teste e protocolo de avaliação.",
     to: "/compare",
     cta: "Ver comparação",
   },
   {
     icon: "pi-info-circle",
-    title: "Sobre o projeto",
-    text: "Conheça a base com quase 6 mil materiais reais usada para fazer as previsões.",
+    title: "Sobre",
+    text: "Conheça a base curada de 5.860 estruturas e a metodologia do estudo.",
     to: "/about",
     cta: "Saiba mais",
   },
@@ -62,13 +62,13 @@ const features = [
     <PageHeader
       stack
       icon="pi-bolt"
-      title="AETHER: materiais para gerar hidrogênio verde"
-      subtitle="Usamos inteligência artificial para prever quais materiais funcionam melhor para gerar hidrogênio, um combustível limpo. Os melhores prendem o hidrogênio na medida certa: nem forte, nem fraco demais."
+      title="AETHER — predição de catalisadores para a HER"
+      subtitle="Sistema de apoio à triagem de catalisadores para a reação de evolução de hidrogênio (HER), com redes neurais de grafos e aprendizado por transferência. Os melhores candidatos têm energia livre de adsorção de hidrogênio próxima de zero (critério de Sabatier)."
     >
       <template #actions>
         <RouterLink to="/screen" class="block w-full sm:w-auto">
           <Button
-            label="Começar busca"
+            label="Iniciar triagem"
             icon="pi pi-arrow-right"
             icon-pos="right"
             class="w-full sm:w-auto"
@@ -79,12 +79,12 @@ const features = [
         <StatPill
           icon="pi-database"
           :value="stats.data.value.n_structures.toLocaleString('pt-BR')"
-          label="materiais"
+          label="estruturas"
         />
         <StatPill
           icon="pi-check-square"
           :value="stats.data.value.n_test_canonical.toLocaleString('pt-BR')"
-          label="amostras de teste"
+          label="conjunto de teste"
         />
         <StatPill
           icon="pi-table"
@@ -94,7 +94,7 @@ const features = [
         <StatPill
           icon="pi-microchip-ai"
           :value="stats.data.value.available_models.length"
-          label="métodos"
+          label="modelos"
         />
       </template>
       <Skeleton v-else width="24rem" height="2rem" />
@@ -147,8 +147,8 @@ const features = [
             <p class="mt-1 text-sm leading-relaxed text-surface-600 dark:text-surface-300">
               É o hidrogênio produzido a partir da água com energia renovável, sem emitir carbono.
               Pode substituir combustíveis fósseis na indústria e no transporte. O maior gargalo é o
-              custo dos materiais que aceleram a reação, e é aí que o AETHER ajuda: encontrando bons
-              materiais mais rápido e mais barato.
+              custo dos catalisadores que aceleram a reação, e é aí que o AETHER atua: identificando
+              bons catalisadores mais rápido e a menor custo.
             </p>
           </div>
         </div>
@@ -178,8 +178,8 @@ const features = [
     >
       <SectionLabel
         icon="pi-flag"
-        title="O que já alcançamos"
-        hint="o quanto cada método acerta"
+        title="Desempenho dos modelos"
+        hint="R² no conjunto de teste"
         class="mb-5"
       />
       <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

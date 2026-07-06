@@ -42,6 +42,8 @@ def parse_args() -> argparse.Namespace:
                    help="default: max for val_r2, min for val_loss/val_mae")
     p.add_argument("--val-frac", type=float, default=0.1)
     p.add_argument("--num-workers", type=int, default=4)
+    p.add_argument("--strategy", default="random", choices=["random", "composition"],
+                   help="partição: canônica aleatória ou agrupada por composição")
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--run-name", default="schnet_baseline")
     p.add_argument("--smoke", action="store_true",

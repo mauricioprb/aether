@@ -1,0 +1,16 @@
+{
+  "r2_test": 0.9448548247406687,
+  "mae_test": 0.08023709401558915,
+  "rmse_test": 0.14368621597447073,
+  "mdae_test": 0.049399375915527344,
+  "max_err_test": 2.1122028827667236,
+  "pearson_r_test": 0.9720393349731221,
+  "spearman_rho_test": 0.9768678623416934,
+  "smape_test": 0.31067853500815745,
+  "mae_meV_test": 80.23709401558915,
+  "frac_chem_acc_test": 0.4473916887709991,
+  "n_params": 455809,
+  "vram_peak_gb": 0.412,
+  "best_ckpt": "/home/mauricio/repositorios/aether/logs/checkpoints/schnet_v2_comp_seed1/epoch=104-step=14070.ckpt",
+  "elapsed_sec": 1044.17
+}

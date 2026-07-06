@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
-from plot_style import L, apply_abnt_style
+from plot_style import L, PALETA, apply_abnt_style, usar_virgula
 
 CHEM_ACCURACY_EV = 0.043  # ~1 kcal/mol; standard chemical accuracy threshold
 
@@ -51,18 +51,24 @@ def metrics_from_preds(y_true, y_pred) -> dict[str, float]:
     }
 
 
+def _pt(v: float, nd: int = 3) -> str:
+    """Número com vírgula decimal (PT-BR) para textos internos das figuras."""
+    return f"{v:.{nd}f}".replace(".", ",")
+
+
 def _metrics_text_box(m: dict[str, float]) -> str:
     return (
-        f"$R^2$ = {m['r2']:.3f}\n"
-        f"MAE = {m['mae']:.3f} eV ({m['mae_meV']:.0f} meV)\n"
-        f"RMSE = {m['rmse']:.3f} eV\n"
-        f"MDAE = {m['mdae']:.3f} eV\n"
-        f"$\\rho_s$ = {m['spearman_rho']:.3f}\n"
-        f"% $<$ 43 meV = {100 * m['frac_chem_acc']:.1f}\\%"
+        f"$R^2$ = {_pt(m['r2'])}\n"
+        f"MAE = {m['mae_meV']:.0f} meV\n"
+        f"RMSE = {_pt(m['rmse'])} eV\n"
+        f"MDAE = {_pt(m['mdae'])} eV\n"
+        f"$\\rho_s$ = {_pt(m['spearman_rho'])}\n"
+        f"$f_{{43}}$ = {_pt(100 * m['frac_chem_acc'], 1)} %"
     )
 
 
-def parity_figure(y_true, y_pred, title: str = "Paridade", color: str = "#4c72b0") -> plt.Figure:
+def parity_figure(y_true, y_pred, title: str | None = None,
+                  color: str = PALETA["azul"]) -> plt.Figure:
     apply_abnt_style()
     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
     m = metrics_from_preds(y_true, y_pred)
@@ -74,15 +80,17 @@ def parity_figure(y_true, y_pred, title: str = "Paridade", color: str = "#4c72b0
             fontsize=9, bbox={"boxstyle": "round", "fc": "white", "ec": "0.8"})
     ax.set_xlabel(L["dg_dft"])
     ax.set_ylabel(L["dg_pred"])
-    ax.set_title(title)
+    if title:
+        ax.set_title(title)
     ax.set_aspect("equal", "box")
     ax.spines[["top", "right"]].set_visible(False)
+    usar_virgula(ax)
     fig.tight_layout()
     return fig
 
 
-def residual_hist_figure(y_true, y_pred, title: str = "Histograma de resíduos",
-                          color: str = "#4c72b0") -> plt.Figure:
+def residual_hist_figure(y_true, y_pred, title: str | None = None,
+                          color: str = PALETA["azul"]) -> plt.Figure:
     apply_abnt_style()
     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
     err = y_pred - y_true
@@ -93,15 +101,17 @@ def residual_hist_figure(y_true, y_pred, title: str = "Histograma de resíduos",
     ax.axvline(-CHEM_ACCURACY_EV, color="0.5", lw=1, ls=":")
     ax.set_xlabel(L["residuo"])
     ax.set_ylabel(L["contagem"])
-    ax.set_title(title)
+    if title:
+        ax.set_title(title)
     ax.legend(frameon=False, fontsize=9)
     ax.spines[["top", "right"]].set_visible(False)
+    usar_virgula(ax, "x")
     fig.tight_layout()
     return fig
 
 
-def residual_vs_pred_figure(y_true, y_pred, title: str = "Resíduo vs. predito",
-                             color: str = "#4c72b0") -> plt.Figure:
+def residual_vs_pred_figure(y_true, y_pred, title: str | None = None,
+                             color: str = PALETA["azul"]) -> plt.Figure:
     apply_abnt_style()
     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
     err = y_pred - y_true
@@ -110,14 +120,16 @@ def residual_vs_pred_figure(y_true, y_pred, title: str = "Resíduo vs. predito",
     ax.axhline(0, color="0.3", lw=1, ls="--")
     ax.set_xlabel(L["dg_pred"])
     ax.set_ylabel(L["residuo"])
-    ax.set_title(title)
+    if title:
+        ax.set_title(title)
     ax.spines[["top", "right"]].set_visible(False)
+    usar_virgula(ax)
     fig.tight_layout()
     return fig
 
 
-def cumulative_error_figure(y_true, y_pred, title: str = "Erro acumulado",
-                             color: str = "#4c72b0") -> plt.Figure:
+def cumulative_error_figure(y_true, y_pred, title: str | None = None,
+                             color: str = PALETA["azul"]) -> plt.Figure:
     apply_abnt_style()
     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
     abs_err = np.sort(np.abs(y_pred - y_true))
@@ -127,25 +139,26 @@ def cumulative_error_figure(y_true, y_pred, title: str = "Erro acumulado",
     ax.axvline(CHEM_ACCURACY_EV, color="0.5", lw=1, ls=":", label=L["acuracia_quimica"])
     ax.set_xlabel(L["limiar_erro"])
     ax.set_ylabel(L["frac_teste"])
-    ax.set_title(title)
+    if title:
+        ax.set_title(title)
     ax.legend(frameon=False, fontsize=9)
     ax.spines[["top", "right"]].set_visible(False)
     ax.set_ylim(0, 1.02)
+    usar_virgula(ax)
     fig.tight_layout()
     return fig
 
 
 def standard_figures(y_true, y_pred, model_label: str,
-                      color: str = "#4c72b0") -> dict[str, plt.Figure]:
-    """Generate the 4 diagnostic figures every model should produce."""
+                      color: str = PALETA["azul"]) -> dict[str, plt.Figure]:
+    """Generate the 4 diagnostic figures every model should produce.
+
+    Sem título interno: na dissertação a legenda ABNT fica acima da figura,
+    no LaTeX; ``model_label`` permanece na assinatura para os chamadores.
+    """
     return {
-        "parity.png": parity_figure(y_true, y_pred, title=f"{model_label} - parity", color=color),
-        "residual_hist.png": residual_hist_figure(y_true, y_pred,
-                                                  title=f"{model_label} - residuals", color=color),
-        "residual_vs_pred.png": residual_vs_pred_figure(y_true, y_pred,
-                                                        title=f"{model_label} - residual vs pred",
-                                                        color=color),
-        "cumulative_error.png": cumulative_error_figure(y_true, y_pred,
-                                                         title=f"{model_label} - cumulative error",
-                                                         color=color),
+        "parity.png": parity_figure(y_true, y_pred, color=color),
+        "residual_hist.png": residual_hist_figure(y_true, y_pred, color=color),
+        "residual_vs_pred.png": residual_vs_pred_figure(y_true, y_pred, color=color),
+        "cumulative_error.png": cumulative_error_figure(y_true, y_pred, color=color),
     }

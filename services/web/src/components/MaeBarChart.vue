@@ -32,12 +32,12 @@ const chemAccPct = computed(() => `${((props.chemicalAccuracyEv * 1000) / maxMae
   >
     <header class="mb-4 flex items-center justify-between">
       <div>
-        <h3 class="text-sm font-semibold">Erro médio (meV)</h3>
+        <h3 class="text-sm font-semibold">MAE (meV)</h3>
         <p class="mt-0.5 text-xs text-surface-500">menor é melhor</p>
       </div>
       <span class="text-2xs text-surface-500">
         <span class="mr-1 inline-block h-2 w-2 rounded-full bg-amber-400"></span>
-        margem aceitável (43 meV)
+        acurácia química (43 meV)
       </span>
     </header>
 

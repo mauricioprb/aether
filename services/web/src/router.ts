@@ -11,13 +11,13 @@ const routes: RouteRecordRaw[] = [
     path: "/screen",
     name: "screen",
     component: () => import("@/views/ScreenView.vue"),
-    meta: { title: "Buscar materiais" },
+    meta: { title: "Triagem" },
   },
   {
     path: "/compare",
     name: "compare",
     component: () => import("@/views/CompareView.vue"),
-    meta: { title: "Comparar métodos" },
+    meta: { title: "Comparação" },
   },
   {
     path: "/about",

@@ -1,0 +1,27 @@
+mace_model: medium
+hidden_dim: 256
+head_layers: 2
+dropout: 0.0
+freeze_backbone: true
+unfreeze_last_n: 0
+max_epochs: 200
+batch_size: 16
+lr: 0.001
+weight_decay: 0.0
+loss: l1
+lr_patience: 20
+lr_factor: 0.5
+patience: 60
+early_stop_monitor: val_r2
+early_stop_mode: null
+val_frac: 0.1
+num_workers: 0
+strategy: composition
+seed: 4
+run_name: mace_ft_stageA_v2_comp_seed4
+smoke: false
+resume: false
+ckpt_dir: logs/checkpoints/mace_ft_stageA_v2_comp_seed4
+model: MACE-MP-0 medium fine-tune
+n_trainable: 328193
+n_total: 5016849

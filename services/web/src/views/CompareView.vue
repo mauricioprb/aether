@@ -49,7 +49,7 @@ function fmtMae(m: { mae_test: number; mae_test_std: number | null }) {
 }
 
 function kindLabel(k: string) {
-  return k === "baseline" ? "Simples" : k === "gnn" ? "Rede neural" : "Combinado";
+  return k === "baseline" ? "Linha de base" : k === "gnn" ? "Rede neural" : "Combinado";
 }
 
 function kindSeverity(k: string): "secondary" | "info" | "success" {
@@ -61,16 +61,16 @@ function kindSeverity(k: string): "secondary" | "info" | "success" {
   <section class="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:space-y-8 sm:px-6 sm:py-10">
     <PageHeader
       icon="pi-chart-bar"
-      title="Comparação dos métodos"
-      subtitle="Colocamos os métodos de previsão lado a lado, testados nas mesmas amostras. Quanto maior a precisão e menor o erro, melhor."
+      title="Comparação dos modelos"
+      subtitle="Os quatro modelos avaliados sob o mesmo conjunto de teste e protocolo. Maior R² e menor erro indicam melhor desempenho."
     >
       <template v-if="data">
-        <StatPill icon="pi-chart-line" :value="data.models.length" label="métodos" />
-        <StatPill icon="pi-asterisk" value="1.172" label="amostras de teste" />
+        <StatPill icon="pi-chart-line" :value="data.models.length" label="modelos" />
+        <StatPill icon="pi-asterisk" value="1.172" label="conjunto de teste" />
         <StatPill
           icon="pi-bullseye"
           :value="`${(data.chemical_accuracy_eV * 1000).toFixed(0)} meV`"
-          label="margem aceitável"
+          label="acurácia química"
         />
       </template>
     </PageHeader>
@@ -90,7 +90,7 @@ function kindSeverity(k: string): "secondary" | "info" | "success" {
       <section class="space-y-4">
         <SectionLabel
           icon="pi-th-large"
-          title="Resumo de cada método"
+          title="Resumo de cada modelo"
           hint="do mais preciso ao menos preciso"
         />
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -136,14 +136,14 @@ function kindSeverity(k: string): "secondary" | "info" | "success" {
       </section>
 
       <SectionCard
-        title="Todos os números"
-        subtitle="Do método mais preciso ao menos preciso. Clique num cabeçalho para reordenar."
+        title="Métricas completas"
+        subtitle="Do modelo mais preciso ao menos preciso. Clique num cabeçalho para reordenar."
         icon="pi-table"
         :padded="false"
       >
         <div class="overflow-hidden rounded-b-2xl">
           <DataTable :value="sortedByR2" striped-rows scrollable class="text-sm!">
-            <Column field="display" header="Método">
+            <Column field="display" header="Modelo">
               <template #body="{ data: row }">
                 <div class="flex items-center gap-2">
                   <span
@@ -164,29 +164,29 @@ function kindSeverity(k: string): "secondary" | "info" | "success" {
                 />
               </template>
             </Column>
-            <Column field="r2_test" header="Precisão" sortable>
+            <Column field="r2_test" header="R²" sortable>
               <template #body="{ data: row }">
                 <span class="font-mono tabular-nums">{{ fmtR2(row) }}</span>
               </template>
             </Column>
-            <Column field="mae_test" header="Erro médio (eV)" sortable>
+            <Column field="mae_test" header="MAE (eV)" sortable>
               <template #body="{ data: row }">
                 <span class="font-mono tabular-nums">{{ fmtMae(row) }}</span>
               </template>
             </Column>
-            <Column field="rmse_test" header="Erro típico (eV)" sortable>
+            <Column field="rmse_test" header="RMSE (eV)" sortable>
               <template #body="{ data: row }">
                 <span class="font-mono tabular-nums">{{ row.rmse_test.toFixed(4) }}</span>
               </template>
             </Column>
-            <Column field="spearman_rho_test" header="Acerto na ordem" sortable>
+            <Column field="spearman_rho_test" header="ρ de Spearman" sortable>
               <template #body="{ data: row }">
                 <span class="font-mono tabular-nums">{{
                   row.spearman_rho_test?.toFixed(4) ?? "n/d"
                 }}</span>
               </template>
             </Column>
-            <Column field="frac_chem_acc_test" header="% quase exatos" sortable>
+            <Column field="frac_chem_acc_test" header="% acurácia química" sortable>
               <template #body="{ data: row }">
                 <span class="font-mono tabular-nums">
                   {{
@@ -197,14 +197,14 @@ function kindSeverity(k: string): "secondary" | "info" | "success" {
                 </span>
               </template>
             </Column>
-            <Column field="n_params" header="Complexidade" sortable>
+            <Column field="n_params" header="Parâmetros" sortable>
               <template #body="{ data: row }">
                 <span class="font-mono tabular-nums">
                   {{ row.n_params != null ? row.n_params.toLocaleString("pt-BR") : "n/d" }}
                 </span>
               </template>
             </Column>
-            <Column field="n_seeds" header="Repetições">
+            <Column field="n_seeds" header="Sementes">
               <template #body="{ data: row }">
                 <span class="text-xs text-surface-500">
                   {{ row.is_multiseed ? `média de ${row.n_seeds}` : "teste único" }}

@@ -65,7 +65,7 @@ const option = computed(() => {
     },
     xAxis: {
       type: "value" as const,
-      name: "valor de referência (eV)",
+      name: "ΔGₕ DFT (eV)",
       nameLocation: "middle" as const,
       nameGap: 24,
       min: lo,
@@ -78,7 +78,7 @@ const option = computed(() => {
     },
     yAxis: {
       type: "value" as const,
-      name: "nota prevista (eV)",
+      name: "ΔGₕ previsto (eV)",
       nameLocation: "middle" as const,
       nameGap: 30,
       min: lo,
@@ -124,9 +124,9 @@ const option = computed(() => {
   >
     <header class="mb-3 flex items-baseline justify-between">
       <div>
-        <h3 class="text-sm font-semibold">{{ title ?? "Previsto vs. real" }}</h3>
+        <h3 class="text-sm font-semibold">{{ title ?? "Predição vs. DFT" }}</h3>
         <p v-if="stats" class="mt-0.5 text-xs text-surface-500">
-          {{ stats.n }} materiais, precisão {{ (stats.r2 * 100).toFixed(0) }}%, erro médio
+          {{ stats.n }} estruturas, R² {{ stats.r2.toFixed(2).replace(".", ",") }}, MAE
           {{ (stats.mae * 1000).toFixed(0) }} meV
         </p>
       </div>

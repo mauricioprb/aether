@@ -52,7 +52,7 @@ const option = computed(() => {
     },
     xAxis: {
       type: "value" as const,
-      name: "tamanho do erro (eV)",
+      name: "limiar de |erro| (eV)",
       nameLocation: "middle" as const,
       nameGap: 24,
       axisLine: { lineStyle: { color: gridColor } },
@@ -67,7 +67,7 @@ const option = computed(() => {
     },
     yAxis: {
       type: "value" as const,
-      name: "materiais dentro do limite",
+      name: "fração de estruturas",
       nameLocation: "middle" as const,
       nameGap: 30,
       min: 0,
@@ -84,7 +84,7 @@ const option = computed(() => {
     series: [
       ...series.value,
       {
-        name: "margem aceitável",
+        name: "acurácia química",
         type: "line" as const,
         data: [],
         markLine: {
@@ -93,7 +93,7 @@ const option = computed(() => {
           label: {
             color: textColor,
             fontSize: 10,
-            formatter: "margem aceitável (43 meV)",
+            formatter: "acurácia química (43 meV)",
           },
           lineStyle: { color: "#f59e0b", type: "dashed" as const, width: 1 },
           data: [{ xAxis: props.chemicalAccuracyEv }],
@@ -109,9 +109,9 @@ const option = computed(() => {
     class="rounded-xl border border-surface-200 bg-surface-0 p-4 shadow-sm dark:border-surface-800 dark:bg-surface-950"
   >
     <header class="mb-3">
-      <h3 class="text-sm font-semibold">Quantos materiais ficam dentro do erro</h3>
+      <h3 class="text-sm font-semibold">Erro acumulado</h3>
       <p class="mt-0.5 text-xs text-surface-500">
-        % de materiais com erro menor que o valor no eixo x. Mais alto é melhor.
+        Fração de estruturas com |erro| abaixo do limiar do eixo x.
       </p>
     </header>
     <VChart :option="option" :style="{ height }" autoresize />

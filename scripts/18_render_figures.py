@@ -24,10 +24,23 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from plot_style import apply_abnt_style, save_fig
+from plot_style import MODEL_COLORS, PALETA, apply_abnt_style, save_fig
 from training.evaluate import standard_figures
 
 logger = logging.getLogger("render-figures")
+
+
+def _color_for(run_name: str) -> str:
+    """Cor de identidade do modelo (paleta da dissertação) a partir do nome do run."""
+    if "etr_baseline" in run_name:
+        return MODEL_COLORS["etr_baseline"]
+    if "schnet" in run_name:
+        return MODEL_COLORS["schnet"]
+    if "stageA" in run_name or "mace_ft" in run_name:
+        return MODEL_COLORS["mace_head"]
+    if "etr_emb" in run_name or "embeddings" in run_name:
+        return MODEL_COLORS["etr_emb"]
+    return PALETA["azul"]
 
 RUNS_DIR = Path("results/runs")
 
@@ -55,7 +68,7 @@ def render_per_run() -> None:
             continue
         label = "_".join(run_dir.name.split("_")[2:]) or run_dir.name
         figs = standard_figures(test["y_true"].to_numpy(), test["y_pred"].to_numpy(),
-                                model_label=label)
+                                model_label=label, color=_color_for(run_dir.name))
         for name, fig in figs.items():
             stem = Path(name).stem  # parity, residual_hist, ...
             save_fig(fig, stem, run_dir / "figures")

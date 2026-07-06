@@ -1,0 +1,16 @@
+{
+  "r2_test": 0.9549419986819334,
+  "mae_test": 0.07606664689215127,
+  "rmse_test": 0.12988150389728126,
+  "mdae_test": 0.05138711631298065,
+  "max_err_test": 1.7648518085479736,
+  "pearson_r_test": 0.9775235410242483,
+  "spearman_rho_test": 0.981063689865822,
+  "smape_test": 0.2864296275136231,
+  "mae_meV_test": 76.06664689215127,
+  "frac_chem_acc_test": 0.43412908930150307,
+  "n_params": 328193,
+  "vram_peak_gb": 0.987,
+  "best_ckpt": "/home/mauricio/repositorios/aether/logs/checkpoints/mace_ft_stageA_v2_comp_seed3/epoch=199-step=53400.ckpt",
+  "elapsed_sec": 291.84
+}

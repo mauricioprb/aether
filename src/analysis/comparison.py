@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from plot_style import L, apply_abnt_style
+from plot_style import L, MODEL_COLORS, apply_abnt_style, usar_virgula
 
 logger = logging.getLogger(__name__)
 
@@ -30,10 +30,10 @@ RESULTS = Path("results")
 #   SchNet 5 seeds mean = 0.9105 -> seed=2 (R²=0.8991) most representative
 #   Stage A 5 seeds mean = 0.9564 -> seed=3 (R²=0.9562) most representative
 WHITELIST: list[tuple[str, str, str, str | None]] = [
-    ("ETR + 10 descritores",  "etr_baseline",             "#dd8452", None),
-    ("SchNet (do zero)",      "schnet_v2_seed2",          "#c44e52", "schnet_v2"),
-    ("MACE Estágio A (GNN)",  "mace_ft_stageA_v2_seed3",  "#4c72b0", "mace_ft_stageA_v2"),
-    ("ETR + emb. MACE 512",   "etr_emb_all",              "#55a868", None),
+    ("ETR + 10 descritores",  "etr_baseline",            MODEL_COLORS["etr_baseline"], None),
+    ("SchNet (do zero)",      "schnet_v2_seed2",         MODEL_COLORS["schnet"],       "schnet_v2"),
+    ("MACE Estágio A (GNN)",  "mace_ft_stageA_v2_seed3", MODEL_COLORS["mace_head"],    "mace_ft_stageA_v2"),
+    ("ETR + emb. MACE 512",   "etr_emb_all",             MODEL_COLORS["etr_emb"],      None),
 ]
 
 METRIC_COLS: list[tuple[str, str]] = [
@@ -170,12 +170,15 @@ def plot_parity_grid(runs: list[ModelRun]) -> plt.Figure:
         ax.plot([lo, hi], [lo, hi], color="0.3", lw=1, ls="--")
         r2 = r.entry.get("r2_test", float("nan"))
         mae = r.entry.get("mae_test", float("nan"))
-        lines = [f"R² = {r2:.3f}", f"MAE = {mae:.3f} eV"]
+        def _pt(v: float, nd: int = 3) -> str:
+            return f"{v:.{nd}f}".replace(".", ",")
+
+        lines = [f"R² = {_pt(r2)}", f"MAE = {_pt(mae)} eV"]
         if r.multiseed_stats:
             ms = r.multiseed_stats
             lines.append(f"n={ms['n']} seeds:")
-            lines.append(f"  R² = {ms['r2_mean']:.3f} ± {ms['r2_std']:.3f}")
-            lines.append(f"  MAE = {ms['mae_mean']:.3f} ± {ms['mae_std']:.3f} eV")
+            lines.append(f"  R² = {_pt(ms['r2_mean'])} ± {_pt(ms['r2_std'])}")
+            lines.append(f"  MAE = {_pt(ms['mae_mean'])} ± {_pt(ms['mae_std'])} eV")
         ax.text(0.05, 0.95, "\n".join(lines),
                 transform=ax.transAxes, va="top", fontsize=9,
                 bbox={"boxstyle": "round", "fc": "white", "ec": "0.8"})
@@ -184,6 +187,7 @@ def plot_parity_grid(runs: list[ModelRun]) -> plt.Figure:
         ax.set_ylabel(L["dg_pred"])
         ax.set_aspect("equal", "box")
         ax.spines[["top", "right"]].set_visible(False)
+        usar_virgula(ax)
     fig.tight_layout()
     return fig
 
@@ -199,8 +203,8 @@ def plot_cumulative_error(runs: list[ModelRun]) -> plt.Figure:
                label=L["acuracia_quimica"])
     ax.set_xlabel(L["limiar_erro"])
     ax.set_ylabel(L["frac_teste"])
-    ax.set_title("Curva de erro acumulado")
     ax.set_ylim(0, 1.02)
+    usar_virgula(ax)
     ax.spines[["top", "right"]].set_visible(False)
     ax.legend(loc="lower right", fontsize=9, frameon=False)
     fig.tight_layout()
@@ -254,7 +258,6 @@ def plot_mae_bar(runs: list[ModelRun]) -> plt.Figure:
         ax.text(bar.get_width() + std + 2, bar.get_y() + bar.get_height() / 2,
                 lbl, va="center", fontsize=9)
     ax.set_xlabel(L["mae_meV"])
-    ax.set_title("MAE no teste, menor é melhor (média ± desvio para multi-seed)")
     ax.legend(loc="lower right", frameon=False, fontsize=9)
     ax.spines[["top", "right"]].set_visible(False)
     fig.tight_layout()

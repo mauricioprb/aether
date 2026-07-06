@@ -54,7 +54,7 @@ const option = computed(() => {
     },
     xAxis: {
       type: "value" as const,
-      name: "diferença entre previsto e real (eV)",
+      name: "resíduo (eV)",
       nameLocation: "middle" as const,
       nameGap: 22,
       splitNumber: 5,
@@ -108,8 +108,10 @@ const option = computed(() => {
     class="rounded-xl border border-surface-200 bg-surface-0 p-4 shadow-sm dark:border-surface-800 dark:bg-surface-950"
   >
     <header class="mb-3 flex items-baseline justify-between">
-      <h3 class="text-sm font-semibold">{{ title ?? "Tamanho dos erros" }}</h3>
-      <span class="text-2xs text-surface-500">linhas: erro zero e margem aceitável (±43 meV)</span>
+      <h3 class="text-sm font-semibold">{{ title ?? "Distribuição dos resíduos" }}</h3>
+      <span class="text-2xs text-surface-500"
+        >linhas: resíduo nulo e acurácia química (±43 meV)</span
+      >
     </header>
     <VChart :option="option" :style="{ height }" autoresize />
   </div>

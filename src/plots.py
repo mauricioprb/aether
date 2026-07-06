@@ -18,7 +18,8 @@ from plot_style import SABATIER_DE_OPT_EV, L, apply_abnt_style, save_fig
 logger = logging.getLogger(__name__)
 
 FIG_DIR = Path("data/figures")
-_PALETTE = {"train": "#4c72b0", "test": "#dd8452", "bar": "#55a868"}
+# Cores da paleta da dissertação (ver plot_style.PALETA).
+_PALETTE = {"train": "#1A5F86", "test": "#1E8649", "bar": "#117368"}
 
 
 def plot_dG_hist(dG: np.ndarray, name: str = "fig3b_dG_hist") -> plt.Figure:

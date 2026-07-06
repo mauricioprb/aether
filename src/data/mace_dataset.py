@@ -135,7 +135,7 @@ class MACEDataset(Dataset):
 
 
 def three_way_split_mace(
-    seed: int = 42, val_frac: float = 0.1,
+    seed: int = 42, val_frac: float = 0.1, strategy: str = "random",
 ) -> dict[str, list[str]]:
     """Canonical train/val/test partition - delegates to ``data.splits``.
 
@@ -143,4 +143,4 @@ def three_way_split_mace(
     embedding pipeline used numpy, so the two saw different val subsets
     (same test set). Unified on the numpy implementation.
     """
-    return three_way_split(seed=seed, val_frac=val_frac)
+    return three_way_split(seed=seed, val_frac=val_frac, strategy=strategy)

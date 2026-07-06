@@ -15,22 +15,22 @@ const pipeline = [
   {
     step: 1,
     title: "Seleção dos dados",
-    desc: "Partimos de 60 mil reações reais e ficamos com quase 6 mil materiais bem documentados.",
+    desc: "Partimos de cerca de 60 mil reações do Catalysis Hub e curamos 5.860 estruturas.",
   },
   {
     step: 2,
-    title: "Leitura dos materiais",
-    desc: "A inteligência artificial transforma cada material num conjunto de números que descreve sua estrutura.",
+    title: "Representação",
+    desc: "Cada estrutura é codificada como grafo atômico ou como vetor de descritores.",
   },
   {
     step: 3,
     title: "Aprendizado",
-    desc: "Os métodos aprendem a prever o desempenho a partir desses materiais conhecidos.",
+    desc: "Os modelos aprendem a prever a energia de adsorção a partir das estruturas rotuladas.",
   },
   {
     step: 4,
-    title: "Busca",
-    desc: "Você escolhe os elementos e recebe os materiais mais promissores, do melhor ao pior.",
+    title: "Triagem",
+    desc: "Selecione os elementos e receba os candidatos ranqueados pelo critério de Sabatier.",
   },
 ];
 </script>
@@ -40,7 +40,7 @@ const pipeline = [
     <PageHeader
       icon="pi-info-circle"
       title="Sobre o AETHER"
-      subtitle="Uma ferramenta que usa inteligência artificial para encontrar materiais que ajudam a gerar hidrogênio."
+      subtitle="Sistema de apoio à triagem de catalisadores para a reação de evolução de hidrogênio, com redes neurais de grafos e aprendizado por transferência."
     />
 
     <SectionCard title="O que faz" icon="pi-bookmark">

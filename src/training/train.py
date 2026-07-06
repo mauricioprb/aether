@@ -21,8 +21,9 @@ def _id_to_index(dataset: HERDataset) -> dict[str, int]:
     return {d.sid: i for i, d in enumerate(dataset)}
 
 
-def make_subsets(dataset: HERDataset, val_frac: float = 0.1, seed: int = 42):
-    splits = load_or_create_splits()
+def make_subsets(dataset: HERDataset, val_frac: float = 0.1, seed: int = 42,
+                 strategy: str = "random"):
+    splits = load_or_create_splits(strategy=strategy)
     idx = _id_to_index(dataset)
     train_ids = [i for i in splits["train"] if i in idx]
     test_ids = [i for i in splits["test"] if i in idx]
@@ -56,7 +57,8 @@ def run_training(cfg: dict[str, Any]) -> dict[str, Any]:
         dataset = dataset[:64]
         train_ds, val_ds, test_ds = dataset[:40], dataset[40:52], dataset[52:]
     else:
-        train_ds, val_ds, test_ds = make_subsets(dataset, val_frac=cfg["val_frac"], seed=cfg["seed"])
+        train_ds, val_ds, test_ds = make_subsets(dataset, val_frac=cfg["val_frac"], seed=cfg["seed"],
+                                                 strategy=cfg.get("strategy", "random"))
     logger.info("train=%d val=%d test=%d", len(train_ds), len(val_ds), len(test_ds))
 
     train_loader, val_loader, test_loader = make_loaders(

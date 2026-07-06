@@ -16,6 +16,7 @@ export interface CandidateRow {
   coverage: number | null;
   delta_G_H: number;
   dG_pred: number;
+  dG_dft: number;
   abs_dG_pred: number;
   error_vs_dft: number;
   dG_pred_etr: number | null;

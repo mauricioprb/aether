@@ -1,0 +1,4 @@
+model: ETR + MACE embeddings 512
+split: composition
+n_train: 4729
+n_test: 1131

@@ -66,6 +66,9 @@ figures:                    ## Generate dissertation figures (fig1-5).
 figures-ptbr:               ## Re-render ALL figures in PT-BR + Times (PDF+PNG), no GPU.
 	$(PY) scripts/18_render_figures.py
 
+figures-shap:               ## SHAP figures (descritores + embeddings) in ABNT style + CSVs.
+	$(PY) scripts/19_shap_figures.py
+
 ensemble:                   ## Ensemble/blend logged runs (CPU, seconds).
 	$(PY) scripts/15_ensemble_eval.py
 

@@ -23,15 +23,34 @@ const { form } = storeToRefs(store);
 const { data: elements, isLoading: loadingElements } = useElements();
 
 const modelOptions: { label: string; value: ModelName; r2: string; hint: string }[] = [
-  { label: "Rápido", value: "etr_emb", r2: "96% de acerto", hint: "resposta em segundos" },
   {
-    label: "Detalhado",
-    value: "stagea",
-    r2: "96% de acerto",
-    hint: "analisa o material a fundo, leva mais tempo",
+    label: "ETR + emb.",
+    value: "etr_emb",
+    r2: "R² = 0,96",
+    hint: "ETR sobre os embeddings do MACE-MP-0",
   },
-  { label: "Combinado", value: "ensemble", r2: "junta os dois", hint: "média dos dois métodos" },
+  {
+    label: "MACE",
+    value: "stagea",
+    r2: "R² = 0,96",
+    hint: "cabeça de regressão sobre o MACE-MP-0 congelado",
+  },
+  {
+    label: "Combinado",
+    value: "ensemble",
+    r2: "média",
+    hint: "média das predições dos dois modelos",
+  },
 ];
+
+const TOP_MIN = 5;
+const TOP_MAX = 100;
+// Marcas da régua posicionadas pela posição REAL no slider (domínio 5..100),
+// e não em intervalos iguais: senão 25/50/75 não caem sob o cursor.
+const topTicks = [5, 25, 50, 75, 100].map((value) => ({
+  value,
+  pos: ((value - TOP_MIN) / (TOP_MAX - TOP_MIN)) * 100,
+}));
 
 const canSubmit = computed(() => form.value.elements.length > 0 && form.value.top > 0);
 const currentModelHint = computed(() => modelOptions.find((m) => m.value === form.value.model));
@@ -65,7 +84,7 @@ useEventListener(window, "keydown", (e: KeyboardEvent) => {
           <h3
             class="text-xs font-semibold uppercase tracking-wider text-surface-700 dark:text-surface-200"
           >
-            Quais elementos o material deve ter
+            Elementos obrigatórios
           </h3>
         </div>
         <span v-if="form.elements.length" class="text-xs text-surface-500">
@@ -80,7 +99,7 @@ useEventListener(window, "keydown", (e: KeyboardEvent) => {
         @update:model-value="store.setForm({ elements: $event })"
       />
       <p class="mt-2 text-xs text-surface-500">
-        O material precisa conter <em>todos</em> os elementos que você marcar.
+        A estrutura deve conter <em>todos</em> os elementos selecionados.
       </p>
     </div>
 
@@ -94,7 +113,7 @@ useEventListener(window, "keydown", (e: KeyboardEvent) => {
         <h3
           class="text-xs font-semibold uppercase tracking-wider text-surface-700 dark:text-surface-200"
         >
-          Como fazer a previsão
+          Modelo preditivo
         </h3>
       </div>
       <div class="model-picker">
@@ -130,31 +149,49 @@ useEventListener(window, "keydown", (e: KeyboardEvent) => {
           <h3
             class="text-xs font-semibold uppercase tracking-wider text-surface-700 dark:text-surface-200"
           >
-            Quantos materiais mostrar
+            Número de candidatos
           </h3>
         </div>
         <div class="flex items-center gap-4">
-          <Slider
-            v-model="form.top"
-            :min="5"
-            :max="100"
-            :step="1"
-            class="flex-1"
-            @change="store.setForm({ top: form.top })"
-          />
+          <!-- A régua fica DENTRO deste bloco flex-1 para ter exatamente a
+               mesma largura do slider; se ficar fora, ela se estende sob o
+               campo numérico e as marcas deixam de coincidir com o cursor. -->
+          <div class="flex-1">
+            <Slider
+              v-model="form.top"
+              :min="TOP_MIN"
+              :max="TOP_MAX"
+              :step="1"
+              class="w-full"
+              @change="store.setForm({ top: form.top })"
+            />
+            <div class="relative mt-1.5 h-3 text-2xs tabular-nums text-surface-400">
+              <span
+                v-for="tick in topTicks"
+                :key="tick.value"
+                class="absolute"
+                :class="
+                  tick.pos === 0
+                    ? 'translate-x-0'
+                    : tick.pos === 100
+                      ? '-translate-x-full'
+                      : '-translate-x-1/2'
+                "
+                :style="{ left: `${tick.pos}%` }"
+                >{{ tick.value }}</span
+              >
+            </div>
+          </div>
           <InputNumber
             v-model="form.top"
-            :min="5"
-            :max="100"
+            :min="TOP_MIN"
+            :max="TOP_MAX"
             show-buttons
             button-layout="horizontal"
             :step="1"
-            :input-style="{ width: '3rem', textAlign: 'center' }"
+            :input-style="{ width: '3.5rem', textAlign: 'center' }"
             @update:model-value="store.setForm({ top: form.top })"
           />
-        </div>
-        <div class="mt-1.5 flex justify-between text-2xs tabular-nums text-surface-400">
-          <span>5</span><span>25</span><span>50</span><span>75</span><span>100</span>
         </div>
       </div>
 
@@ -179,11 +216,10 @@ useEventListener(window, "keydown", (e: KeyboardEvent) => {
           />
           <span class="text-xs leading-snug">
             <span class="block font-medium text-surface-700 dark:text-surface-200"
-              >Mostrar só materiais novos</span
+              >Restringir ao conjunto de teste</span
             >
             <span class="mt-0.5 block text-2xs text-surface-500">
-              Esconde os materiais que a inteligência artificial já conhece, para um teste mais
-              justo.
+              Exclui as estruturas vistas no treinamento, evitando predições memorizadas.
             </span>
           </span>
         </label>
@@ -220,7 +256,7 @@ useEventListener(window, "keydown", (e: KeyboardEvent) => {
         />
         <Button
           type="submit"
-          :label="submitting ? 'Buscando…' : 'Buscar materiais'"
+          :label="submitting ? 'Triando…' : 'Triar candidatos'"
           icon="pi pi-search"
           icon-pos="right"
           :loading="submitting"

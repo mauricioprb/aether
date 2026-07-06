@@ -150,7 +150,7 @@ class ComparisonPredictionsResponse(BaseModel):
 KIND_BY_NAME: dict[str, Literal["baseline", "gnn", "hybrid"]] = {
     "etr_baseline": "baseline",
     "schnet_v2_seed2": "gnn",
-    "mace_ft_stageA_v2_seed3": "gnn",
+    "mace_ft_stageA_v2_comp_seed3": "gnn",
     "etr_emb_all": "hybrid",
 }
 

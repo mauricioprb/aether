@@ -32,6 +32,31 @@ SERIF_CHAIN = [
     "Nimbus Roman No9 L", "STIX", "STIX Two Text", "DejaVu Serif",
 ]
 
+# No WSL, as fontes do Windows ficam visíveis em /mnt/c; registrar a Times New
+# Roman verdadeira faz a figura usar a MESMA fonte do corpo da dissertação
+# (mathptmx), em vez do fallback STIX.
+WINDOWS_FONTS = Path("/mnt/c/Windows/Fonts")
+_TIMES_FILES = ("times.ttf", "timesbd.ttf", "timesi.ttf", "timesbi.ttf")
+
+# Paleta única da dissertação (a mesma dos diagramas TikZ dos capítulos;
+# razões de contraste WCAG comentadas lá). Luminâncias distintas garantem
+# leitura em impressão preto e branco.
+PALETA = {
+    "indigo":  "#243F7A",
+    "azul":    "#1A5F86",
+    "teal":    "#117368",
+    "verde":   "#1E8649",
+    "grafite": "#3A3A3A",
+}
+
+# Identidade cromática dos quatro modelos, estável em todas as figuras.
+MODEL_COLORS = {
+    "etr_baseline": PALETA["teal"],
+    "schnet":       PALETA["azul"],
+    "mace_head":    PALETA["indigo"],
+    "etr_emb":      PALETA["verde"],
+}
+
 # Rótulos centralizados em português (fonte única da verdade).
 # O alvo do modelo é a energia ELETRÔNICA dE_H (rótulo do Catalysis Hub);
 # dG_H = dE_H + 0,24 eV aparece só no contexto de Sabatier/screening.
@@ -55,10 +80,21 @@ L = {
 }
 
 
+def _register_windows_times() -> None:
+    """Registra os TTF da Times New Roman do Windows (WSL), se presentes."""
+    import matplotlib.font_manager as fm
+
+    for fname in _TIMES_FILES:
+        p = WINDOWS_FONTS / fname
+        if p.exists():
+            fm.fontManager.addfont(str(p))
+
+
 def _resolve_serif() -> str:
     """First font in SERIF_CHAIN actually available; logs the choice."""
     import matplotlib.font_manager as fm
 
+    _register_windows_times()
     available = {f.name for f in fm.fontManager.ttflist}
     for name in SERIF_CHAIN:
         if name in available:
@@ -90,6 +126,17 @@ def apply_abnt_style(base_size: int = 11) -> None:
         "savefig.dpi": 300,
         "savefig.bbox": "tight",
     })
+
+
+def usar_virgula(ax: plt.Axes, eixos: str = "xy") -> None:
+    """Vírgula decimal (PT-BR) nos ticks; a máquina não tem locale pt_BR."""
+    from matplotlib.ticker import FuncFormatter
+
+    fmt = FuncFormatter(lambda v, _: f"{v:g}".replace(".", ","))
+    if "x" in eixos:
+        ax.xaxis.set_major_formatter(fmt)
+    if "y" in eixos:
+        ax.yaxis.set_major_formatter(fmt)
 
 
 def save_fig(fig: plt.Figure, name: str, fig_dir: str | Path,

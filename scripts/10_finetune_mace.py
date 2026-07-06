@@ -63,12 +63,16 @@ def parse_args() -> argparse.Namespace:
                    help="default: max for val_r2, min for val_loss/val_mae")
     p.add_argument("--val-frac", type=float, default=0.1)
     p.add_argument("--num-workers", type=int, default=0)
+    p.add_argument("--strategy", default="random", choices=["random", "composition"],
+                   help="partição: canônica aleatória ou agrupada por composição")
     p.add_argument("--seed", type=int, default=42)
     # Output
     p.add_argument("--run-name", default="mace_finetune")
     # Smoke test
     p.add_argument("--smoke", action="store_true",
                    help="2 epochs, tiny subset: pipeline check only")
+    p.add_argument("--resume", action="store_true",
+                   help="Retomar do último checkpoint salvo (last.ckpt)")
     return p.parse_args()
 
 
@@ -93,7 +97,8 @@ def main() -> None:
     cfg["ckpt_dir"] = f"logs/checkpoints/{args.run_name}"
 
     # --- Data ---
-    splits = three_way_split_mace(seed=args.seed, val_frac=args.val_frac)
+    splits = three_way_split_mace(seed=args.seed, val_frac=args.val_frac,
+                                  strategy=args.strategy)
     logger.info("split: train=%d val=%d test=%d",
                 len(splits["train"]), len(splits["val"]), len(splits["test"]))
 
@@ -173,7 +178,8 @@ def main() -> None:
         log_every_n_steps=10,
         enable_progress_bar=not args.smoke,
     )
-    trainer.fit(model, train_loader, val_loader)
+    ckpt_path = "last" if args.resume else None
+    trainer.fit(model, train_loader, val_loader, ckpt_path=ckpt_path)
     trainer.test(model, test_loader, ckpt_path="best")
     train_seconds = round(time.perf_counter() - t0, 2)
 

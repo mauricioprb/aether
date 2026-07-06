@@ -64,19 +64,19 @@ function onReset() {
   <section class="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:space-y-8 sm:px-6 sm:py-10">
     <PageHeader
       icon="pi-search"
-      title="Buscar materiais"
-      subtitle="Escolha os elementos químicos, veja os materiais mais promissores ordenados do melhor ao pior e baixe a lista."
+      title="Triagem de catalisadores"
+      subtitle="Selecione os elementos da composição e ranqueie os candidatos pela proximidade do ótimo de Sabatier (ΔGₕ ≈ 0)."
     >
       <template v-if="stats.data.value">
         <StatPill
           icon="pi-database"
           :value="stats.data.value.n_structures.toLocaleString('pt-BR')"
-          label="materiais"
+          label="estruturas"
         />
         <StatPill
           icon="pi-check-square"
           :value="stats.data.value.n_test_canonical.toLocaleString('pt-BR')"
-          label="amostras de teste"
+          label="conjunto de teste"
         />
         <StatPill
           icon="pi-table"
@@ -86,7 +86,7 @@ function onReset() {
         <StatPill
           icon="pi-microchip-ai"
           :value="stats.data.value.available_models.length"
-          label="métodos"
+          label="modelos"
         />
       </template>
       <Skeleton v-else width="20rem" height="2rem" />
@@ -120,11 +120,11 @@ function onReset() {
       <ResultsTable :result="lastResult" />
 
       <section class="space-y-4">
-        <SectionLabel icon="pi-chart-scatter" title="Quão confiáveis são estas previsões" />
+        <SectionLabel icon="pi-chart-scatter" title="Paridade entre predição e referência de DFT" />
         <ParityScatter
-          :y-true="lastResult.rows.map((r) => r.delta_G_H)"
+          :y-true="lastResult.rows.map((r) => r.dG_dft)"
           :y-pred="lastResult.rows.map((r) => r.dG_pred)"
-          :title="`Previsto vs. real (${lastResult.rows.length} materiais)`"
+          :title="`ΔGₕ previsto vs. DFT (${lastResult.rows.length} estruturas)`"
           color="#10b981"
         />
       </section>
@@ -133,8 +133,8 @@ function onReset() {
     <SectionCard v-else :padded="false">
       <EmptyState
         icon="pi-sparkles"
-        title="Nenhuma busca ainda"
-        description="Escolha os elementos químicos na tabela acima, ajuste quantos materiais quer ver e clique em Buscar materiais para receber os mais promissores."
+        title="Nenhuma triagem ainda"
+        description="Selecione os elementos na tabela periódica, defina o número de candidatos e execute a triagem para obter o ranqueamento."
       />
     </SectionCard>
   </section>

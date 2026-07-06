@@ -25,10 +25,10 @@ function fmt(n: number, digits = 4) {
 }
 
 function chemAccTag(absDg: number) {
-  if (absDg < 0.043) return { severity: "success" as const, text: "Excelente" };
-  if (absDg < 0.1) return { severity: "info" as const, text: "Bom" };
-  if (absDg < 0.2) return { severity: "warn" as const, text: "Razoável" };
-  return { severity: "danger" as const, text: "Distante" };
+  if (absDg < 0.043) return { severity: "success" as const, text: "acurácia química" };
+  if (absDg < 0.1) return { severity: "info" as const, text: "próximo" };
+  if (absDg < 0.2) return { severity: "warn" as const, text: "moderado" };
+  return { severity: "danger" as const, text: "distante" };
 }
 
 function rowClass(row: CandidateRow) {
@@ -85,9 +85,9 @@ function downloadCsv() {
     >
       <div class="min-w-0">
         <div class="text-sm font-semibold">
-          {{ result.rows.length }} materiais
+          {{ result.rows.length }} estruturas
           <span class="text-surface-500 font-normal">
-            de {{ result.n_candidates }} encontrados com
+            de {{ result.n_candidates }} candidatas com
             <span
               v-for="el in result.elements"
               :key="el"
@@ -97,11 +97,11 @@ function downloadCsv() {
           </span>
         </div>
         <div class="mt-0.5 text-xs text-surface-500">
-          Do mais promissor ao menos
+          Ordenado pela proximidade do ótimo de Sabatier
           <span
             v-if="result.exclude_train"
             class="ml-2 text-2xs rounded bg-surface-100 px-1.5 py-0.5 uppercase tracking-wide dark:bg-surface-800"
-            >só novos</span
+            >conjunto de teste</span
           >
         </div>
       </div>
@@ -110,7 +110,7 @@ function downloadCsv() {
           <InputIcon class="pi pi-search" />
           <InputText
             v-model="filters.global.value"
-            placeholder="Buscar material…"
+            placeholder="Filtrar…"
             size="small"
             class="w-full"
           />
@@ -147,23 +147,23 @@ function downloadCsv() {
       >
         <template #body="{ index }">{{ index + 1 }}</template>
       </Column>
-      <Column field="chemical_formula" header="Material" sortable>
+      <Column field="chemical_formula" header="Estrutura" sortable>
         <template #body="{ data }">
           <span class="font-mono text-sm">{{ data.chemical_formula }}</span>
         </template>
       </Column>
-      <Column field="facet" header="Face" sortable header-style="width: 5rem" />
-      <Column field="site_type" header="Onde liga o H" sortable header-style="width: 6rem">
+      <Column field="facet" header="Faceta" sortable header-style="width: 5rem" />
+      <Column field="site_type" header="Sítio" sortable header-style="width: 6rem">
         <template #body="{ data }">
           <span class="capitalize">{{ data.site_type }}</span>
         </template>
       </Column>
-      <Column field="dG_pred" header="Nota prevista (eV)" sortable header-style="width: 9rem">
+      <Column field="dG_pred" header="ΔGₕ previsto (eV)" sortable header-style="width: 9rem">
         <template #body="{ data }">
           <span class="font-mono tabular-nums">{{ fmt(data.dG_pred) }}</span>
         </template>
       </Column>
-      <Column field="abs_dG_pred" header="Avaliação" sortable header-style="width: 8rem">
+      <Column field="abs_dG_pred" header="Proximidade do ótimo" sortable header-style="width: 8rem">
         <template #body="{ data }">
           <Tag
             :severity="chemAccTag(data.abs_dG_pred).severity"
@@ -171,17 +171,12 @@ function downloadCsv() {
           />
         </template>
       </Column>
-      <Column
-        field="delta_G_H"
-        header="Valor de referência (eV)"
-        sortable
-        header-style="width: 9rem"
-      >
+      <Column field="dG_dft" header="ΔGₕ DFT (eV)" sortable header-style="width: 9rem">
         <template #body="{ data }">
-          <span class="font-mono tabular-nums text-surface-500">{{ fmt(data.delta_G_H) }}</span>
+          <span class="font-mono tabular-nums text-surface-500">{{ fmt(data.dG_dft) }}</span>
         </template>
       </Column>
-      <Column field="error_vs_dft" header="Diferença (eV)" sortable header-style="width: 10rem">
+      <Column field="error_vs_dft" header="Erro vs. DFT (eV)" sortable header-style="width: 10rem">
         <template #body="{ data }">
           <span
             class="font-mono tabular-nums"
@@ -193,7 +188,7 @@ function downloadCsv() {
       <Column
         v-if="isEnsemble"
         field="dG_pred_etr"
-        header="Rápido"
+        header="ETR + emb."
         sortable
         header-style="width: 6rem"
       >
@@ -206,7 +201,7 @@ function downloadCsv() {
       <Column
         v-if="isEnsemble"
         field="dG_pred_stagea"
-        header="Detalhado"
+        header="MACE"
         sortable
         header-style="width: 6rem"
       >
