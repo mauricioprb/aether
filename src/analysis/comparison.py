@@ -90,7 +90,16 @@ def load_run(entry: dict, display: str, color: str,
 def _compute_multiseed_stats(summary: list[dict], group_prefix: str) -> dict | None:
     """Compute mean/std of R²/MAE for runs whose name starts with ``group_prefix_seed``."""
     rx = re.compile(rf"^{re.escape(group_prefix)}_seed\d+$")
-    siblings = [e for e in summary if rx.match(e.get("name", ""))]
+    # One entry per seed: keep the earliest run of each name (the original
+    # multi-seed campaign); later reruns of the same seed (e.g. to log extra
+    # artifacts) must not enter the statistics twice.
+    by_name: dict[str, dict] = {}
+    for e in summary:
+        name = e.get("name", "")
+        if rx.match(name) and (name not in by_name
+                               or e["timestamp"] < by_name[name]["timestamp"]):
+            by_name[name] = e
+    siblings = list(by_name.values())
     if not siblings:
         return None
     r2s = [e["r2_test"] for e in siblings if isinstance(e.get("r2_test"), (int, float))]

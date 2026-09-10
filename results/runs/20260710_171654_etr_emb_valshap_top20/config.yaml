@@ -1,0 +1,26 @@
+model: ExtraTreesRegressor
+strategy: valshap_top20
+selection: SHAP over validation block (leak-free)
+selector_fit: train block only
+n_features: 20
+features:
+- embH_053
+- embH_142
+- embH_115
+- embH_188
+- embH_150
+- embN_011
+- embH_019
+- embH_049
+- embH_229
+- embH_052
+- embH_003
+- embH_088
+- embH_204
+- embH_206
+- embH_194
+- embH_020
+- embH_134
+- embH_071
+- embH_168
+- embN_027

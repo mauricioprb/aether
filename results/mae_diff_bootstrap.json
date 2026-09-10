@@ -1,0 +1,11 @@
+{
+  "comparison": "ETR+embeddings minus MACE-MP-0 head ensemble (n=5)",
+  "n_pairs": 1172,
+  "mae_etr_emb_eV": 0.07135616644832743,
+  "mae_head_ens_eV": 0.06699058329450117,
+  "mae_diff_eV": 0.004365583153826267,
+  "ci95_low_eV": -1.0143507946179939e-05,
+  "ci95_high_eV": 0.008492087032991851,
+  "n_boot": 10000,
+  "seed": 42
+}

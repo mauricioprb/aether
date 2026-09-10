@@ -49,3 +49,5 @@ results/runs/*/*.ckpt
 #   results/comparison_table.md
 #   results/multiseed_summary.md
 #   results/dissertacao_metrics.md
+
+/paper
