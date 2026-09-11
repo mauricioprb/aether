@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { num } from "@/format";
 import { computed } from "vue";
 import VChart from "vue-echarts";
 import { useDark } from "@vueuse/core";
+import { chartRef, chartTheme, modelColor } from "@/charts/palette";
 import type { ModelPredictions } from "@/api";
 
 const props = withDefaults(
@@ -16,7 +18,7 @@ const props = withDefaults(
 const isDark = useDark();
 
 const series = computed(() =>
-  props.models.map((m) => {
+  props.models.map((m, i) => {
     const abs = m.y_pred.map((p, i) => Math.abs(p - (m.y_true[i] ?? 0))).sort((a, b) => a - b);
     const n = abs.length;
     const data = abs.map((x, i) => [x, (i + 1) / n]);
@@ -26,18 +28,18 @@ const series = computed(() =>
       data,
       showSymbol: false,
       smooth: false,
-      lineStyle: { color: m.color, width: 2 },
-      itemStyle: { color: m.color },
+      lineStyle: { color: modelColor(i, isDark.value), width: 2 },
+      itemStyle: { color: modelColor(i, isDark.value) },
     };
   }),
 );
 
 const option = computed(() => {
-  const textColor = isDark.value ? "#cbd5e1" : "#475569";
-  const gridColor = isDark.value ? "#334155" : "#e2e8f0";
+  const { text: textColor, grid: gridColor, surface } = chartTheme(isDark.value);
   return {
-    grid: { left: 8, right: 16, top: 32, bottom: 40, containLabel: true },
+    grid: { left: 0, right: 4, top: 30, bottom: 34, containLabel: true },
     legend: {
+      data: props.models.map((m) => m.display),
       top: 0,
       textStyle: { color: textColor, fontSize: 11 },
       itemWidth: 18,
@@ -45,21 +47,26 @@ const option = computed(() => {
     },
     tooltip: {
       trigger: "axis" as const,
-      backgroundColor: isDark.value ? "#1e293b" : "#fff",
+      backgroundColor: surface,
       borderColor: gridColor,
       textStyle: { color: textColor },
-      valueFormatter: (v: number) => v.toFixed(4),
+      valueFormatter: (v: number) => num(v, 4),
     },
     xAxis: {
       type: "value" as const,
       name: "limiar de |erro| (eV)",
       nameLocation: "middle" as const,
       nameGap: 24,
+      // Recortado em 0,6 eV: 99% das estruturas erram menos que isso, e as
+      // curvas só se separam abaixo de 0,3. No eixo completo, um único outlier
+      // do SchNet (5,08 eV) empurrava a comparação inteira para 5% da largura.
+      min: 0,
+      max: 0.6,
       axisLine: { lineStyle: { color: gridColor } },
       axisLabel: {
         color: textColor,
         fontSize: 10,
-        formatter: (v: number) => v.toFixed(2),
+        formatter: (v: number) => num(v, 2),
         hideOverlap: true,
       },
       splitLine: { lineStyle: { color: gridColor, opacity: 0.4 } },
@@ -67,16 +74,13 @@ const option = computed(() => {
     },
     yAxis: {
       type: "value" as const,
-      name: "fração de estruturas",
-      nameLocation: "middle" as const,
-      nameGap: 30,
       min: 0,
       max: 1.02,
       axisLine: { lineStyle: { color: gridColor } },
       axisLabel: {
         color: textColor,
         fontSize: 10,
-        formatter: (v: number) => `${(v * 100).toFixed(0)}%`,
+        formatter: (v: number) => `${num(v * 100, 0)}%`,
       },
       splitLine: { lineStyle: { color: gridColor, opacity: 0.4 } },
       nameTextStyle: { color: textColor, fontSize: 10 },
@@ -87,6 +91,8 @@ const option = computed(() => {
         name: "acurácia química",
         type: "line" as const,
         data: [],
+        lineStyle: { color: chartRef(isDark.value) },
+        itemStyle: { color: chartRef(isDark.value) },
         markLine: {
           symbol: "none",
           silent: true,
@@ -95,7 +101,7 @@ const option = computed(() => {
             fontSize: 10,
             formatter: "acurácia química (43 meV)",
           },
-          lineStyle: { color: "#f59e0b", type: "dashed" as const, width: 1 },
+          lineStyle: { color: chartRef(isDark.value), type: "dashed" as const, width: 1 },
           data: [{ xAxis: props.chemicalAccuracyEv }],
         },
       },
@@ -106,7 +112,7 @@ const option = computed(() => {
 
 <template>
   <div
-    class="rounded-xl border border-surface-200 bg-surface-0 p-4 shadow-sm dark:border-surface-800 dark:bg-surface-950"
+    class="rounded-lg border border-surface-200 bg-surface-0 p-4 dark:border-surface-800 dark:bg-surface-950"
   >
     <header class="mb-3">
       <h3 class="text-sm font-semibold">Erro acumulado</h3>
@@ -114,6 +120,13 @@ const option = computed(() => {
         Fração de estruturas com |erro| abaixo do limiar do eixo x.
       </p>
     </header>
-    <VChart :option="option" :style="{ height }" autoresize />
+    <div class="flex gap-1.5">
+      <p class="self-center text-2xs text-surface-500 [writing-mode:vertical-rl] rotate-180">
+        fração de estruturas
+      </p>
+      <div class="min-w-0 flex-1" :style="{ height }">
+        <VChart :option="option" class="h-full w-full" autoresize />
+      </div>
+    </div>
   </div>
 </template>

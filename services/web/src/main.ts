@@ -12,7 +12,7 @@ import { router } from "@/router";
 import "@/main.css";
 import "@/charts/setup";
 
-const THEME_COLOR = "#38C649";
+const THEME_COLOR = "#0D6B52";
 
 const SURFACE_LIGHT = "{neutral}";
 const SURFACE_DARK = "{neutral}";

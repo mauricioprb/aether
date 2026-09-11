@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
 @import "tailwindcss";
 @import "tailwindcss-primeui";
 @import "primeicons/primeicons.css";
@@ -7,13 +7,21 @@
 
 @theme {
   --font-sans:
-    "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    sans-serif;
-  --font-display: "Montserrat", "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  --text-2xs: 0.6875rem;
-  --text-2xs--line-height: 1rem;
+  /* Escala de 4 degraus. Antes conviviam 11, 12, 14, 16, 18, 20 e 24px sem
+     regra, o que apagava a hierarquia: agora peso e cor separam os níveis,
+     não sete tamanhos. */
+  --text-2xs: 0.6875rem; /* 11px, micro: réguas e legenda */
+  --text-2xs--line-height: 0.95rem;
+  --text-xs: 0.75rem; /* 12px, rótulo de campo e texto secundário */
+  --text-xs--line-height: 1.1rem;
+  --text-sm: 0.8125rem; /* 13px, corpo, controles e dado de tabela */
+  --text-sm--line-height: 1.25rem;
+  --text-base: 0.9375rem; /* 15px, único tamanho de título */
+  --text-base--line-height: 1.35rem;
   --text-3xs: 0.5rem;
   --text-3xs--line-height: 0.75rem;
 }
@@ -29,8 +37,93 @@ body {
   font-family: var(--font-sans);
 }
 
-h1,
-h2,
-h3 {
-  font-family: var(--font-display);
+/* Todo numeral alinha em coluna: o mono e o sans do IBM Plex compartilham
+   metricas, entao rotulo e valor ficam na mesma linha de base. */
+.tabular,
+table td,
+table th {
+  font-variant-numeric: tabular-nums;
+}
+
+/* As partes que não desenhamos também carregam o design. Seleção, caret,
+   scrollbar e anel de foco vêm com default de navegador, que não pertence a
+   nenhum sistema visual. */
+::selection {
+  background: color-mix(in oklab, var(--p-primary-color) 24%, transparent);
+  color: var(--p-text-color);
+}
+
+:root {
+  scrollbar-color: var(--p-surface-300) transparent;
+  scrollbar-width: thin;
+  caret-color: var(--p-primary-color);
+  accent-color: var(--p-primary-color);
+}
+.dark {
+  scrollbar-color: var(--p-surface-700) transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--p-primary-color);
+  outline-offset: 2px;
+}
+
+/* Campo do PrimeVue já desenha o próprio foco. Sem esta exceção, o anel global
+   acima se soma ao dele e aparecem dois indicadores, um deslocado do outro. */
+.p-inputtext:focus-visible,
+.p-inputnumber-input:focus-visible,
+.p-select:focus-visible,
+.p-togglebutton:focus-visible,
+.p-toggleswitch-input:focus-visible,
+.p-slider-handle:focus-visible {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* O preflight do Tailwind 4 deixou de dar cursor: pointer a <button>. Sem isto
+   todo botão do app fica com a seta padrão. */
+button:not(:disabled),
+[role="button"]:not(:disabled),
+label:has(> input[type="checkbox"]),
+summary {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* InputNumber com botões desenha borda no grupo E no campo interno, criando
+   linha dupla, e ainda põe o anel de foco no campo. A borda fica só no grupo, e
+   o foco passa para ele via :focus-within, senão o indicador some. */
+.p-inputnumber:has(.p-inputnumber-button) .p-inputnumber-input {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  outline: none;
+}
+
+.p-inputnumber:has(.p-inputnumber-button) {
+  border: 1px solid var(--p-inputtext-border-color);
+  border-radius: var(--p-inputtext-border-radius);
+  overflow: hidden;
+}
+
+/* Mesmo foco de um campo comum do PrimeVue: só a borda muda de cor. Um anel
+   extra aqui deixava este controle mais pesado que o campo de filtro ao lado. */
+.p-inputnumber:has(.p-inputnumber-button):focus-within {
+  border-color: var(--p-inputtext-focus-border-color, var(--p-primary-color));
+}
+
+.p-inputnumber:has(.p-inputnumber-button) .p-inputnumber-button {
+  border: 0;
+  border-radius: 0;
 }

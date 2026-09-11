@@ -8,9 +8,11 @@ etc.) plus custom attributes for pooling masks (h_mask, nb_mask) and target (y).
 from __future__ import annotations
 
 import logging
+from functools import lru_cache
 from pathlib import Path
 
 import torch
+from ase import Atoms
 from ase.io import Trajectory
 from mace import data as mace_data
 from mace.tools import torch_tools
@@ -43,6 +45,35 @@ def _make_data(
     return data
 
 
+def graph_from_atoms(
+    atoms,
+    z_table: torch.Tensor,
+    r_max: float = 6.0,
+    cutoff_neighbors: float = 2.4,
+    heads: list[str] | None = None,
+) -> Data:
+    """Grafo MACE de uma estrutura, com as mascaras de pooling e sem rotulo.
+
+    Separado do MACEDataset porque predizer estrutura nova nao tem id nem
+    delta_G_H: o que o modelo consome e isto aqui, nao uma linha do dataset.
+    """
+    data = _make_data(atoms, z_table, r_max, heads or ["Default"])
+
+    h_idx = adsorbate_indices(atoms)
+    central = central_indices(atoms, cutoff_neighbors)
+
+    h_mask = torch.zeros(data.num_nodes, dtype=torch.bool)
+    if len(h_idx):
+        h_mask[torch.tensor(h_idx, dtype=torch.long)] = True
+    data.h_mask = h_mask
+
+    nb_mask = torch.zeros(data.num_nodes, dtype=torch.bool)
+    if len(central):
+        nb_mask[torch.tensor(central, dtype=torch.long)] = True
+    data.nb_mask = nb_mask
+    return data
+
+
 def _pool_mask(
     node_feats: torch.Tensor,
     batch: torch.Tensor,
@@ -65,6 +96,17 @@ def _pool_mask(
     counts = scatter(mask.to(node_feats.dtype), batch, dim=0, dim_size=num_graphs).clamp(min=1)
     sums = scatter(feats_masked, batch, dim=0, dim_size=num_graphs)
     return sums / counts.unsqueeze(-1)
+
+
+@lru_cache(maxsize=2)
+def _load_frames(traj_path: str) -> dict[str, Atoms]:
+    """Frames do .traj por caminho, cacheados.
+
+    A API constroi um MACEDataset por requisicao de stagea/ensemble; sem cache
+    cada uma relia o .traj inteiro e /screen custava ~2 s em vez de ~0,2 s. Os
+    Atoms so sao lidos daqui pra frente, entao compartilhar a instancia e seguro.
+    """
+    return {a.info["id"]: a for a in Trajectory(traj_path)}
 
 
 class MACEDataset(Dataset):
@@ -91,7 +133,7 @@ class MACEDataset(Dataset):
         else:
             self.z_table = z_table
 
-        frames = {a.info["id"]: a for a in Trajectory(str(self.traj_path))}
+        frames = _load_frames(str(self.traj_path))
         all_ids = list(frames.keys())
         if ids is not None:
             all_ids = [i for i in ids if i in frames]
@@ -102,22 +144,9 @@ class MACEDataset(Dataset):
 
         for sid in tqdm(all_ids, desc="MACE dataset"):
             atoms = frames[sid]
-            data = _make_data(atoms, self.z_table, self.r_max, self.heads)
-
-            # Attach masks for pooling
-            h_idx = adsorbate_indices(atoms)
-            central = central_indices(atoms, cutoff_neighbors)
-
-            h_mask = torch.zeros(data.num_nodes, dtype=torch.bool)
-            if len(h_idx):
-                h_mask[torch.tensor(h_idx, dtype=torch.long)] = True
-            data.h_mask = h_mask
-
-            nb_mask = torch.zeros(data.num_nodes, dtype=torch.bool)
-            if len(central):
-                nb_mask[torch.tensor(central, dtype=torch.long)] = True
-            data.nb_mask = nb_mask
-
+            data = graph_from_atoms(
+                atoms, self.z_table, self.r_max, cutoff_neighbors, self.heads,
+            )
             data.y = torch.tensor([float(atoms.info["delta_G_H"])], dtype=torch.float32)
             data.sid = sid
 

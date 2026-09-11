@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { useMediaQuery } from "@vueuse/core";
+import { useDark, useMediaQuery } from "@vueuse/core";
+import { DG_BANDS, bandColor, dgInk, dgRamp } from "@/charts/palette";
+import { num } from "@/format";
+import type { ElementStat } from "@/api";
 
 const selected = defineModel<string[]>({ required: true });
 
 const props = defineProps<{
   available: string[];
+  stats?: ElementStat[];
+  minSample?: number;
 }>();
 
 type El = [number, string, number, number];
@@ -255,6 +260,47 @@ const NAMES: Record<string, string> = {
   Og: "Oganessônio",
 };
 
+const isDark = useDark();
+
+const statBySymbol = computed(() => new Map((props.stats ?? []).map((s) => [s.symbol, s])));
+
+/** Só entra na escala de cor com amostra suficiente: mediana de n=1 é ruído
+ *  colorido, e C tem 1 estrutura na base, O tem 3. */
+function statFor(sym: string): ElementStat | null {
+  const st = statBySymbol.value.get(sym);
+  if (!st || st.n < (props.minSample ?? 10)) return null;
+  return st;
+}
+
+function cellStyle(sym: string) {
+  const st = statFor(sym);
+  const selected = isSelected(sym);
+  // Seleção é moldura na borda da célula, não um retângulo flutuando dentro
+  // dela: o anel interno lia como adesivo e brigava com o preenchimento.
+  const ink = isDark.value ? "#f4f7f6" : "#12191a";
+  const mark = selected ? { borderColor: ink, borderWidth: "2px", fontWeight: "700" } : {};
+  if (!st) return mark;
+  const c = dgRamp(st.median_dG, isDark.value);
+  return {
+    backgroundColor: c,
+    borderColor: c,
+    color: dgInk(st.median_dG, isDark.value),
+    ...mark,
+  };
+}
+
+function cellTitle(sym: string) {
+  const name = NAMES[sym] ?? sym;
+  if (!availableSet.value.has(sym)) return `${name}, ausente na base`;
+  const st = statBySymbol.value.get(sym);
+  if (!st) return name;
+  const suffix =
+    st.n < (props.minSample ?? 10)
+      ? `${st.n} estrutura${st.n === 1 ? "" : "s"}, amostra insuficiente`
+      : `${st.n} estruturas, mediana ΔG_H ${num(st.median_dG, 3)} eV`;
+  return `${name}: ${suffix}`;
+}
+
 const availableSet = computed(() => new Set(props.available));
 const selectedSet = computed(() => new Set(selected.value));
 
@@ -299,87 +345,89 @@ function clearAll() {
   <div>
     <div v-if="isDesktop">
       <div class="overflow-x-auto pb-1">
-        <div class="grid min-w-2xl gap-1" style="grid-template-columns: repeat(18, minmax(0, 1fr))">
+        <div
+          class="grid min-w-[34rem] gap-1"
+          style="grid-template-columns: repeat(18, minmax(0, 1fr))"
+        >
           <button
-            v-for="[z, sym, col, row] in MAIN"
+            v-for="[, sym, col, row] in MAIN"
             :key="sym"
             type="button"
             :disabled="!isAvailable(sym)"
-            :title="NAMES[sym]"
-            :style="{ gridColumn: col, gridRow: row }"
-            class="group relative aspect-square rounded-md border text-center transition select-none"
+            :title="cellTitle(sym)"
+            :style="{ gridColumn: col, gridRow: row, ...cellStyle(sym) }"
+            class="relative aspect-square rounded border text-center transition select-none focus-visible:ring-2 focus-visible:ring-surface-900 focus-visible:outline-none dark:focus-visible:ring-surface-0"
             :class="[
-              isSelected(sym)
-                ? 'border-primary-500 bg-primary-500 text-white shadow-sm shadow-primary-500/30'
-                : isAvailable(sym)
-                  ? 'cursor-pointer border-surface-200 bg-surface-0 text-surface-800 hover:border-primary-400 hover:bg-primary-50 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-100 dark:hover:bg-primary-950/50'
-                  : 'cursor-default border-transparent bg-surface-50 text-surface-300 dark:bg-surface-900/40 dark:text-surface-700',
+              isAvailable(sym)
+                ? 'cursor-pointer hover:brightness-110'
+                : 'cursor-default border-transparent bg-surface-100 text-surface-300 dark:bg-surface-800/50 dark:text-surface-600',
+              !statFor(sym) && isAvailable(sym)
+                ? 'border-transparent bg-surface-200 text-surface-500 dark:bg-surface-700/50 dark:text-surface-400'
+                : '',
             ]"
             @click="toggle(sym)"
           >
-            <span class="absolute left-1 top-0.5 text-3xs leading-none tabular-nums opacity-60">{{
-              z
-            }}</span>
-            <span class="grid h-full place-items-center text-xs font-semibold sm:text-sm">{{
-              sym
-            }}</span>
+            <span class="grid h-full place-items-center text-xs font-semibold">{{ sym }}</span>
           </button>
         </div>
       </div>
 
       <div class="mt-1 overflow-x-auto pb-1">
-        <div class="grid min-w-2xl gap-1" style="grid-template-columns: repeat(18, minmax(0, 1fr))">
+        <div
+          class="grid min-w-[34rem] gap-1"
+          style="grid-template-columns: repeat(18, minmax(0, 1fr))"
+        >
           <button
-            v-for="[z, sym, col, row] in FBLOCK"
+            v-for="[, sym, col, row] in FBLOCK"
             :key="sym"
             type="button"
             :disabled="!isAvailable(sym)"
-            :title="NAMES[sym]"
-            :style="{ gridColumn: col, gridRow: row - 8 }"
-            class="group relative aspect-square rounded-md border text-center transition select-none"
+            :title="cellTitle(sym)"
+            :style="{ gridColumn: col, gridRow: row - 8, ...cellStyle(sym) }"
+            class="relative aspect-square rounded border text-center transition select-none focus-visible:ring-2 focus-visible:ring-surface-900 focus-visible:outline-none dark:focus-visible:ring-surface-0"
             :class="[
-              isSelected(sym)
-                ? 'border-primary-500 bg-primary-500 text-white shadow-sm shadow-primary-500/30'
-                : isAvailable(sym)
-                  ? 'cursor-pointer border-surface-200 bg-surface-0 text-surface-800 hover:border-primary-400 hover:bg-primary-50 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-100 dark:hover:bg-primary-950/50'
-                  : 'cursor-default border-transparent bg-surface-50 text-surface-300 dark:bg-surface-900/40 dark:text-surface-700',
+              isAvailable(sym)
+                ? 'cursor-pointer hover:brightness-110'
+                : 'cursor-default border-transparent bg-surface-100 text-surface-300 dark:bg-surface-800/50 dark:text-surface-600',
+              !statFor(sym) && isAvailable(sym)
+                ? 'border-transparent bg-surface-200 text-surface-500 dark:bg-surface-700/50 dark:text-surface-400'
+                : '',
             ]"
             @click="toggle(sym)"
           >
-            <span class="absolute left-1 top-0.5 text-3xs leading-none tabular-nums opacity-60">{{
-              z
-            }}</span>
-            <span class="grid h-full place-items-center text-xs font-semibold sm:text-sm">{{
-              sym
-            }}</span>
+            <span class="grid h-full place-items-center text-xs font-semibold">{{ sym }}</span>
           </button>
         </div>
       </div>
 
-      <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs">
-        <div class="flex items-center gap-3 text-surface-500">
-          <span class="flex items-center gap-1.5">
-            <span class="h-3 w-3 rounded-sm bg-primary-500"></span> selecionado
-          </span>
-          <span class="flex items-center gap-1.5">
-            <span
-              class="h-3 w-3 rounded-sm border border-surface-300 bg-surface-0 dark:border-surface-700 dark:bg-surface-900"
-            ></span>
-            disponível
-          </span>
-          <span class="flex items-center gap-1.5">
-            <span class="h-3 w-3 rounded-sm bg-surface-100 dark:bg-surface-800"></span> ausente no
-            dataset
-          </span>
-        </div>
-        <button
-          v-if="selected.length"
-          type="button"
-          class="font-medium text-primary-600 hover:underline dark:text-primary-400"
-          @click="clearAll"
+      <div class="mt-3">
+        <div class="mb-1.5 text-xs font-medium text-surface-500">mediana de ΔG_H (eV)</div>
+        <div
+          class="flex"
+          role="img"
+          aria-label="Escala divergente de ΔG_H, de ligação forte a fraca"
         >
-          Limpar ({{ selected.length }})
-        </button>
+          <span
+            v-for="(b, i) in DG_BANDS"
+            :key="b.label"
+            class="h-2 flex-1"
+            :style="{ backgroundColor: bandColor(i, isDark) }"
+            :title="`${b.label}, ${b.hint}`"
+          ></span>
+        </div>
+        <div class="mt-1 flex justify-between font-mono text-2xs tabular-nums text-surface-400">
+          <span>−0,20</span>
+          <span>0</span>
+          <span>+0,20</span>
+        </div>
+        <div class="flex justify-between text-2xs text-surface-500">
+          <span>liga forte</span>
+          <span>ótimo</span>
+          <span>liga fraca</span>
+        </div>
+        <p class="mt-2 text-2xs text-surface-400">
+          Sem cor: elemento fora da base, ou com menos de {{ minSample ?? 10 }} estruturas.
+        </p>
       </div>
     </div>
 

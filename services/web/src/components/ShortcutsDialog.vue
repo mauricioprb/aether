@@ -9,12 +9,11 @@ const groups: { label: string; items: { keys: string[]; desc: string }[] }[] = [
       { keys: ["g", "h"], desc: "Ir para Início" },
       { keys: ["g", "s"], desc: "Ir para Buscar" },
       { keys: ["g", "c"], desc: "Ir para Comparar" },
-      { keys: ["g", "a"], desc: "Ir para Sobre" },
     ],
   },
   {
     label: "Busca",
-    items: [{ keys: ["Ctrl", "Enter"], desc: "Fazer a busca" }],
+    items: [{ keys: ["Ctrl", "Enter"], desc: "Executar a triagem" }],
   },
   {
     label: "Geral",
@@ -37,7 +36,7 @@ const groups: { label: string; items: { keys: string[]; desc: string }[] }[] = [
   >
     <div class="space-y-5">
       <section v-for="g in groups" :key="g.label">
-        <h4 class="mb-2 text-2xs font-semibold uppercase tracking-wider text-surface-500">
+        <h4 class="mb-2 text-xs font-semibold text-surface-500">
           {{ g.label }}
         </h4>
         <ul class="space-y-1.5">

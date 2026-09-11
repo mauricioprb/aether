@@ -10,10 +10,18 @@ from __future__ import annotations
 
 import numpy as np
 from ase import Atoms
+from ase.data import covalent_radii
 from ase.neighborlist import natural_cutoffs, neighbor_list
 
 ADS_CUTOFF = 2.4  # angstrom, paper's H-surface cutoff (defines central atoms)
 COORD_MULT = 1.2  # covalent-radii tolerance for the metal first-neighbor shell
+
+# Atomos mais proximos que MIN_DISTANCE_RATIO x (raio covalente somado) estao
+# sobrepostos. Calibrado, nao chutado: nas 7238 estruturas do dataset o menor
+# valor observado e 0.669, entao 0.60 nao rejeita nada legitimo e ainda pega as
+# geometrias em que o modelo extrapola sem avisar (H a 0.8 A de um Pt ontop da
+# 0.479 e uma predicao de +13.6 eV com cara de resposta).
+MIN_DISTANCE_RATIO = 0.60
 
 
 def adsorbate_indices(atoms: Atoms) -> list[int]:
@@ -86,3 +94,21 @@ def site_type(n_central: int) -> str:
     if n_central == 2:
         return "bridge"
     return "hollow"
+
+
+def min_distance_ratio(atoms: Atoms) -> float:
+    """Menor distancia interatomica em unidades de raio covalente somado.
+
+    1.0 significa dois atomos exatamente encostados pelos raios covalentes;
+    abaixo de ``MIN_DISTANCE_RATIO`` eles se sobrepoem e a estrutura nao e
+    fisicamente plausivel.
+    """
+    if len(atoms) < 2:
+        return float("inf")
+    # ponytail: O(n^2) com a matriz inteira; o /predict limita a 512 atomos, o
+    # que da 262k pares e roda em milissegundos. Se o teto subir, trocar por
+    # neighbor_list com cutoff.
+    d = atoms.get_all_distances(mic=True)
+    radii = covalent_radii[atoms.numbers]
+    np.fill_diagonal(d, np.inf)
+    return float((d / (radii[:, None] + radii[None, :])).min())

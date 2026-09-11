@@ -1,11 +1,11 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
-import type { CandidateRow, ModelName, ScreenRequest, ScreenResponse } from "@/api";
+import type { CandidateRow, ScreenRequest, ScreenResponse } from "@/api";
 
 const DEFAULTS: ScreenRequest = {
   elements: ["Pt"],
   top: 10,
-  model: "etr_emb",
+  model: "ensemble",
   exclude_train: true,
 };
 
@@ -20,7 +20,8 @@ function loadPersistedForm(): ScreenRequest {
     return {
       elements: parsed.elements ?? DEFAULTS.elements,
       top: parsed.top ?? DEFAULTS.top,
-      model: (parsed.model as ModelName | undefined) ?? DEFAULTS.model,
+      // O seletor saiu da tela: nunca restaura um modelo antigo do storage.
+      model: DEFAULTS.model,
       exclude_train: parsed.exclude_train ?? DEFAULTS.exclude_train,
     };
   } catch {

@@ -1,12 +1,7 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
 
 const routes: RouteRecordRaw[] = [
-  {
-    path: "/",
-    name: "home",
-    component: () => import("@/views/HomeView.vue"),
-    meta: { title: "Início" },
-  },
+  { path: "/", redirect: "/screen" },
   {
     path: "/screen",
     name: "screen",
@@ -14,16 +9,16 @@ const routes: RouteRecordRaw[] = [
     meta: { title: "Triagem" },
   },
   {
+    path: "/predict",
+    name: "predict",
+    component: () => import("@/views/PredictView.vue"),
+    meta: { title: "Prever" },
+  },
+  {
     path: "/compare",
     name: "compare",
     component: () => import("@/views/CompareView.vue"),
-    meta: { title: "Comparação" },
-  },
-  {
-    path: "/about",
-    name: "about",
-    component: () => import("@/views/AboutView.vue"),
-    meta: { title: "Sobre" },
+    meta: { title: "Modelos" },
   },
 ];
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Toast from "primevue/toast";
 import ConfirmDialog from "primevue/confirmdialog";
-import FloatingNavbar from "@/components/FloatingNavbar.vue";
+import AppTopBar from "@/components/AppTopBar.vue";
 import ShortcutsDialog from "@/components/ShortcutsDialog.vue";
 import { useGlobalShortcuts } from "@/composables";
 
@@ -10,9 +10,9 @@ useGlobalShortcuts();
 
 <template>
   <div class="flex h-full flex-col bg-surface-50 dark:bg-surface-900">
-    <FloatingNavbar />
+    <AppTopBar />
 
-    <main class="flex-1 overflow-auto bg-surface-50 pt-20 dark:bg-surface-900">
+    <main class="min-w-0 flex-1 overflow-auto">
       <RouterView />
     </main>
 

@@ -15,13 +15,14 @@ import logging
 import os
 import pickle
 import sqlite3
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
 import numpy as np
 import pandas as pd
+from ase import Atoms
 from ase.formula import Formula
 
 logger = logging.getLogger(__name__)
@@ -208,28 +209,78 @@ def _stagea_model():
     return model, device
 
 
+def predictable_mask(df: pd.DataFrame, model: ModelName) -> pd.Series:
+    """Quais linhas o ``model`` consegue prever.
+
+    ``etr_emb`` (e ``ensemble``, que o contem) le embeddings de um cache que
+    cobre so as 5860 estruturas curadas, enquanto o dataset tem 7238. Sem este
+    filtro, qualquer triagem que inclua o conjunto de treino estoura KeyError
+    dentro do predict e vira 500.
+    """
+    if model == "stagea":
+        return pd.Series(True, index=df.index)
+    have = load_all_embeddings().keys()
+    return df["id"].isin(have)
+
+
+@lru_cache(maxsize=1)
+def _mp_calculator():
+    """MACE-MP-0 pristino, para embutir estrutura que nao esta no dataset.
+
+    Nao da pra reaproveitar o backbone do Stage A: ele foi fine-tunado, e o ETR
+    foi treinado sobre descritores do MP-0 intacto. Trocar um pelo outro muda a
+    distribuicao das features sem erro nenhum aparecer.
+    """
+    import torch
+    from mace.calculators import mace_mp
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    logger.info("loading MACE-MP-0 descriptors calculator (device=%s)", device)
+    return mace_mp(model="medium", device=device, default_dtype="float32")
+
+
+def embed_atoms(frames: list[Atoms]) -> np.ndarray:
+    """Embedding MACE (512-d) de estruturas arbitrarias, no mesmo pooling do treino."""
+    from models.mace_features import structure_embedding
+
+    calc = _mp_calculator()
+    return np.vstack([structure_embedding(a, calc) for a in frames]).astype(np.float64)
+
+
 def predict_etr_emb(ids: list[str]) -> np.ndarray:
     emb = load_all_embeddings()
     X = np.vstack([emb[sid] for sid in ids])
     return _etr_model().predict(X)
 
 
-def predict_stagea(ids: list[str], batch_size: int = 16) -> np.ndarray:
+def predict_etr_emb_atoms(frames: list[Atoms]) -> np.ndarray:
+    return _etr_model().predict(embed_atoms(frames))
+
+
+def predict_stagea_atoms(frames: list[Atoms], batch_size: int = 16) -> np.ndarray:
+    """Stage A sobre estruturas arbitrarias. Caminho unico: o de ids so resolve
+    os Atoms antes de chegar aqui."""
     import torch
     from torch_geometric.loader import DataLoader
 
-    from data.mace_dataset import MACEDataset
+    from data.mace_dataset import graph_from_atoms
 
     model, device = _stagea_model()
-    ds = MACEDataset(ids=list(ids), z_table=model.z_table, r_max=model.r_max)
-    loader = DataLoader(ds, batch_size=batch_size)
+    graphs = [graph_from_atoms(a, model.z_table, model.r_max) for a in frames]
     preds: list[float] = []
     with torch.no_grad():
-        for batch in loader:
+        for batch in DataLoader(graphs, batch_size=batch_size):
             if device == "cuda":
                 batch = batch.cuda()
             preds.extend(model(batch).cpu().tolist())
     return np.array(preds)
+
+
+def predict_stagea(ids: list[str], batch_size: int = 16) -> np.ndarray:
+    from data.mace_dataset import TRAJ_PATH, _load_frames
+
+    frames = _load_frames(str(TRAJ_PATH))
+    return predict_stagea_atoms([frames[i] for i in ids if i in frames], batch_size)
 
 
 def predict(ids: list[str], model: ModelName) -> np.ndarray | tuple[np.ndarray, ...]:
@@ -243,6 +294,21 @@ def predict(ids: list[str], model: ModelName) -> np.ndarray | tuple[np.ndarray, 
     raise ValueError(f"unknown model: {model}")
 
 
+def predict_atoms(frames: list[Atoms], model: ModelName) -> np.ndarray:
+    """ΔE_H previsto para estruturas que nao estao no dataset.
+
+    Mesmos pesos do caminho por id; o que muda e so de onde vem o Atoms. Some o
+    ``SABATIER_CORRECTION_EV`` por fora para obter ΔG_H, como no /screen.
+    """
+    if model == "etr_emb":
+        return predict_etr_emb_atoms(frames)
+    if model == "stagea":
+        return predict_stagea_atoms(frames)
+    if model == "ensemble":
+        return 0.5 * (predict_etr_emb_atoms(frames) + predict_stagea_atoms(frames))
+    raise ValueError(f"unknown model: {model}")
+
+
 @dataclass
 class ScreenResult:
     elements: list[str]
@@ -252,6 +318,10 @@ class ScreenResult:
     n_candidates: int
     dg_correction: float
     rows: list[dict]  # one dict per top-N row
+    # ΔG_H previsto de TODAS as candidatas. O modelo ja roda sobre o conjunto
+    # inteiro antes do corte, entao sai de graca, e o vulcao precisa das
+    # encostas para o apice significar alguma coisa.
+    pool_dG_pred: list[float] = field(default_factory=list)
 
 
 def screen(elements: list[str], top: int = 10, model: ModelName = "etr_emb",
@@ -268,9 +338,13 @@ def screen(elements: list[str], top: int = 10, model: ModelName = "etr_emb",
     if candidates.empty:
         return ScreenResult(elements=sorted(required), model=model, top=top,
                              exclude_train=exclude_train, n_candidates=0,
-                             dg_correction=dg_correction, rows=[])
+                             dg_correction=dg_correction, rows=[], pool_dG_pred=[])
 
-    candidates = candidates.copy()
+    candidates = candidates[predictable_mask(candidates, model)].copy()
+    if candidates.empty:
+        return ScreenResult(elements=sorted(required), model=model, top=top,
+                             exclude_train=exclude_train, n_candidates=0,
+                             dg_correction=dg_correction, rows=[], pool_dG_pred=[])
     ids = candidates["id"].tolist()
     if model == "ensemble":
         p_etr = predict_etr_emb(ids)
@@ -292,4 +366,5 @@ def screen(elements: list[str], top: int = 10, model: ModelName = "etr_emb",
         elements=sorted(required), model=model, top=top,
         exclude_train=exclude_train, n_candidates=len(candidates),
         dg_correction=dg_correction, rows=top_df.to_dict(orient="records"),
+        pool_dG_pred=[round(float(v), 4) for v in candidates["dG_pred"]],
     )

@@ -2,81 +2,55 @@
 import { computed } from "vue";
 import Skeleton from "primevue/skeleton";
 import Message from "primevue/message";
-import DataTable from "primevue/datatable";
-import Column from "primevue/column";
-import Tag from "primevue/tag";
 import Button from "primevue/button";
 
-import PageHeader from "@/components/PageHeader.vue";
-import StatPill from "@/components/StatPill.vue";
-import SectionCard from "@/components/SectionCard.vue";
-import ModelCard from "@/components/ModelCard.vue";
+import ModelTable from "@/components/ModelTable.vue";
+import AppFooter from "@/components/AppFooter.vue";
 import SectionLabel from "@/components/SectionLabel.vue";
 import CumulativeErrorChart from "@/components/CumulativeErrorChart.vue";
 import ParityScatter from "@/components/ParityScatter.vue";
 import { useComparison, useComparisonPredictions } from "@/composables";
+import { modelColor } from "@/charts/palette";
+import { useDark } from "@vueuse/core";
 
+const isDark = useDark();
 const { data, isLoading, error, refetch } = useComparison();
 const { data: preds, isLoading: loadingPreds } = useComparisonPredictions();
 
-const sortedByR2 = computed(() =>
-  [...(data.value?.models ?? [])].sort((a, b) => b.r2_test - a.r2_test),
-);
+/** Domínio comum aos quatro gráficos de paridade, com as caudas recortadas: no
+ *  domínio completo um outlier de 5 eV do SchNet achataria os outros três. */
+const PARITY_DOMAIN: [number, number] = [-1.2, 1.2];
 
-const bestR2 = computed(() =>
-  Math.max(...(data.value?.models ?? []).map((m) => m.r2_test), -Infinity),
+const outliers = computed(() =>
+  (preds.value?.models ?? []).map((m) => ({
+    display: m.display,
+    n: m.y_true.filter(
+      (v, i) =>
+        v < PARITY_DOMAIN[0] ||
+        v > PARITY_DOMAIN[1] ||
+        (m.y_pred[i] ?? 0) < PARITY_DOMAIN[0] ||
+        (m.y_pred[i] ?? 0) > PARITY_DOMAIN[1],
+    ).length,
+  })),
 );
-const bestMaeMeV = computed(() =>
-  Math.min(...(data.value?.models ?? []).map((m) => m.mae_meV_test), Infinity),
-);
-const bestFracChem = computed(() =>
-  Math.max(...(data.value?.models ?? []).map((m) => m.frac_chem_acc_test ?? -Infinity)),
-);
-const bestRmse = computed(() =>
-  Math.min(...(data.value?.models ?? []).map((m) => m.rmse_test), Infinity),
-);
-
-function fmtR2(m: { r2_test: number; r2_test_std: number | null }) {
-  return m.r2_test_std != null
-    ? `${m.r2_test.toFixed(4)} ± ${m.r2_test_std.toFixed(4)}`
-    : m.r2_test.toFixed(4);
-}
-
-function fmtMae(m: { mae_test: number; mae_test_std: number | null }) {
-  return m.mae_test_std != null
-    ? `${m.mae_test.toFixed(4)} ± ${m.mae_test_std.toFixed(4)}`
-    : m.mae_test.toFixed(4);
-}
-
-function kindLabel(k: string) {
-  return k === "baseline" ? "Linha de base" : k === "gnn" ? "Rede neural" : "Combinado";
-}
-
-function kindSeverity(k: string): "secondary" | "info" | "success" {
-  return k === "baseline" ? "secondary" : k === "gnn" ? "info" : "success";
-}
 </script>
 
 <template>
-  <section class="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:space-y-8 sm:px-6 sm:py-10">
-    <PageHeader
-      icon="pi-chart-bar"
-      title="Comparação dos modelos"
-      subtitle="Os quatro modelos avaliados sob o mesmo conjunto de teste e protocolo. Maior R² e menor erro indicam melhor desempenho."
-    >
-      <template v-if="data">
-        <StatPill icon="pi-chart-line" :value="data.models.length" label="modelos" />
-        <StatPill icon="pi-asterisk" value="1.172" label="conjunto de teste" />
-        <StatPill
-          icon="pi-bullseye"
-          :value="`${(data.chemical_accuracy_eV * 1000).toFixed(0)} meV`"
-          label="acurácia química"
-        />
-      </template>
-    </PageHeader>
+  <section class="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6">
+    <header>
+      <h1 class="text-base font-semibold tracking-tight text-surface-900 dark:text-surface-0">
+        Modelos
+      </h1>
+      <p class="mt-1 max-w-3xl text-xs text-surface-500">
+        Os quatro modelos usam as mesmas 5.860 estruturas do Catalysis Hub: 4.220 para treino, 468
+        para ajuste e 1.172 para teste. As métricas abaixo são do conjunto de teste. O limiar de
+        acurácia química adotado é 43 meV.
+      </p>
+    </header>
 
-    <div v-if="isLoading" class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      <Skeleton v-for="i in 4" :key="i" height="14rem" />
+    <div v-if="isLoading" class="space-y-4">
+      <Skeleton height="3rem" />
+      <Skeleton v-for="i in 4" :key="i" height="3.5rem" />
     </div>
 
     <Message v-else-if="error" severity="error" :closable="false">
@@ -87,133 +61,41 @@ function kindSeverity(k: string): "secondary" | "info" | "success" {
     </Message>
 
     <template v-else-if="data">
-      <section class="space-y-4">
-        <SectionLabel
-          icon="pi-th-large"
-          title="Resumo de cada modelo"
-          hint="do mais preciso ao menos preciso"
+      <ModelTable :models="data.models" />
+
+      <section class="space-y-3">
+        <SectionLabel title="Distribuição do erro" />
+        <CumulativeErrorChart
+          v-if="preds"
+          :models="preds.models"
+          :chemical-accuracy-ev="preds.chemical_accuracy_eV"
         />
-        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <ModelCard
-            v-for="m in sortedByR2"
-            :key="m.display"
-            :model="m"
-            :best-r2="bestR2"
-            :best-mae-me-v="bestMaeMeV"
-            :best-frac-chem="bestFracChem"
-            :best-rmse="bestRmse"
-          />
-        </div>
+        <Skeleton v-else-if="loadingPreds" height="20rem" />
       </section>
 
-      <section class="space-y-4">
-        <SectionLabel icon="pi-chart-line" title="Gráficos comparativos" />
-        <div class="grid gap-4">
-          <CumulativeErrorChart
-            v-if="preds"
-            :models="preds.models"
-            :chemical-accuracy-ev="preds.chemical_accuracy_eV"
-          />
-          <div
-            v-else-if="loadingPreds"
-            class="grid h-full place-items-center rounded-2xl border border-surface-200 bg-surface-0 p-6 shadow-sm dark:border-surface-800 dark:bg-surface-950"
-          >
-            <span class="text-xs text-surface-500">Carregando gráficos…</span>
+      <section v-if="preds" class="space-y-3">
+        <SectionLabel title="Predito vs. referência, mesma escala" />
+        <p class="-mt-1 text-xs text-surface-500">
+          Um seed por modelo, não a média dos cinco, então o MAE aqui difere do da tabela para
+          SchNet e MACE, que são multi-seed.
+        </p>
+        <div class="grid gap-4 lg:grid-cols-2">
+          <div v-for="(m, i) in preds.models" :key="m.display" class="min-w-0">
+            <ParityScatter
+              :y-true="m.y_true"
+              :y-pred="m.y_pred"
+              :title="m.display"
+              :color="modelColor(i, isDark)"
+              :domain="PARITY_DOMAIN"
+            />
+            <p v-if="outliers[i]?.n" class="mt-1 text-2xs text-surface-500">
+              {{ outliers[i]!.n }} fora de ±1,2 eV
+            </p>
           </div>
         </div>
-
-        <div v-if="preds" class="grid gap-4 md:grid-cols-2">
-          <ParityScatter
-            v-for="m in preds.models"
-            :key="m.display"
-            :y-true="m.y_true"
-            :y-pred="m.y_pred"
-            :title="m.display"
-            :color="m.color"
-            height="300px"
-          />
-        </div>
       </section>
-
-      <SectionCard
-        title="Métricas completas"
-        subtitle="Do modelo mais preciso ao menos preciso. Clique num cabeçalho para reordenar."
-        icon="pi-table"
-        :padded="false"
-      >
-        <div class="overflow-hidden rounded-b-2xl">
-          <DataTable :value="sortedByR2" striped-rows scrollable class="text-sm!">
-            <Column field="display" header="Modelo">
-              <template #body="{ data: row }">
-                <div class="flex items-center gap-2">
-                  <span
-                    class="inline-block h-2.5 w-2.5 rounded-full"
-                    :style="{ backgroundColor: row.color }"
-                  ></span>
-                  <span class="font-medium">{{ row.display }}</span>
-                </div>
-              </template>
-            </Column>
-            <Column field="kind" header="Categoria">
-              <template #body="{ data: row }">
-                <Tag
-                  :severity="kindSeverity(row.kind)"
-                  :value="kindLabel(row.kind)"
-                  rounded
-                  class="whitespace-nowrap"
-                />
-              </template>
-            </Column>
-            <Column field="r2_test" header="R²" sortable>
-              <template #body="{ data: row }">
-                <span class="font-mono tabular-nums">{{ fmtR2(row) }}</span>
-              </template>
-            </Column>
-            <Column field="mae_test" header="MAE (eV)" sortable>
-              <template #body="{ data: row }">
-                <span class="font-mono tabular-nums">{{ fmtMae(row) }}</span>
-              </template>
-            </Column>
-            <Column field="rmse_test" header="RMSE (eV)" sortable>
-              <template #body="{ data: row }">
-                <span class="font-mono tabular-nums">{{ row.rmse_test.toFixed(4) }}</span>
-              </template>
-            </Column>
-            <Column field="spearman_rho_test" header="ρ de Spearman" sortable>
-              <template #body="{ data: row }">
-                <span class="font-mono tabular-nums">{{
-                  row.spearman_rho_test?.toFixed(4) ?? "n/d"
-                }}</span>
-              </template>
-            </Column>
-            <Column field="frac_chem_acc_test" header="% acurácia química" sortable>
-              <template #body="{ data: row }">
-                <span class="font-mono tabular-nums">
-                  {{
-                    row.frac_chem_acc_test != null
-                      ? (row.frac_chem_acc_test * 100).toFixed(1) + "%"
-                      : "n/d"
-                  }}
-                </span>
-              </template>
-            </Column>
-            <Column field="n_params" header="Parâmetros" sortable>
-              <template #body="{ data: row }">
-                <span class="font-mono tabular-nums">
-                  {{ row.n_params != null ? row.n_params.toLocaleString("pt-BR") : "n/d" }}
-                </span>
-              </template>
-            </Column>
-            <Column field="n_seeds" header="Sementes">
-              <template #body="{ data: row }">
-                <span class="text-xs text-surface-500">
-                  {{ row.is_multiseed ? `média de ${row.n_seeds}` : "teste único" }}
-                </span>
-              </template>
-            </Column>
-          </DataTable>
-        </div>
-      </SectionCard>
     </template>
+
+    <AppFooter />
   </section>
 </template>

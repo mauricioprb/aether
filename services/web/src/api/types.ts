@@ -1,5 +1,24 @@
 export type ModelName = "etr_emb" | "stagea" | "ensemble";
 
+export interface ElementStat {
+  symbol: string;
+  n: number;
+  median_dG: number;
+  best_abs_dG: number;
+}
+
+export interface ElementStatsResponse {
+  elements: ElementStat[];
+  min_sample: number;
+  chemical_accuracy_eV: number;
+}
+
+export interface CountResponse {
+  elements: string[];
+  exclude_train: boolean;
+  n_candidates: number;
+}
+
 export interface ScreenRequest {
   elements: string[];
   top: number;
@@ -24,6 +43,7 @@ export interface CandidateRow {
 }
 
 export interface ScreenResponse {
+  pool_dG_pred: number[];
   elements: string[];
   model: ModelName;
   top: number;
@@ -34,9 +54,22 @@ export interface ScreenResponse {
 
 export interface StatsResponse {
   n_structures: number;
+  n_screenable: number;
   n_test_canonical: number;
   available_elements: string[];
   available_models: string[];
+}
+
+export type StructureFormat = "cif" | "extxyz" | "vasp";
+
+export interface PredictResponse {
+  chemical_formula: string;
+  n_atoms: number;
+  model: ModelName;
+  dE_pred: number;
+  dG_pred: number;
+  abs_dG_pred: number;
+  elements_in_training: boolean;
 }
 
 export type ModelKind = "baseline" | "gnn" | "hybrid";

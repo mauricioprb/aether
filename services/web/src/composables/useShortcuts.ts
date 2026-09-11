@@ -33,7 +33,6 @@ export function useGlobalShortcuts() {
       if (e.key === "h") router.push("/");
       if (e.key === "s") router.push("/screen");
       if (e.key === "c") router.push("/compare");
-      if (e.key === "a") router.push("/about");
       lastG = 0;
     }
   });

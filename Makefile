@@ -96,8 +96,12 @@ screen:                     ## Rank catalysts by |ΔG_H_pred|. Vars: ELEMENTS, T
 API_HOST ?= 0.0.0.0
 API_PORT ?= 8000
 WEB_PORT ?= 5173
-api-dev:                    ## Run REST API in dev mode (auto-reload). Open http://localhost:$(API_PORT)/docs
-	.venv/bin/uvicorn --app-dir services/api main:app --host $(API_HOST) --port $(API_PORT) --reload
+# SEM --reload de proposito: a reimportacao de modulo corrompe os registries
+# globais de torch/e3nn e o checkpoint do MACE Stage A passa a falhar com
+# "NameError: module is not installed as a submodule" no torch.fx. Reinicie a
+# mao apos editar o backend.
+api-dev:                    ## Run REST API in dev mode. Open http://localhost:$(API_PORT)/docs
+	.venv/bin/uvicorn --app-dir services/api main:app --host $(API_HOST) --port $(API_PORT)
 
 api:                        ## Run REST API in production mode.
 	.venv/bin/uvicorn --app-dir services/api main:app --host $(API_HOST) --port $(API_PORT) --workers 1
@@ -139,6 +143,7 @@ artifacts-tarball:          ## Build /tmp/aether-artifacts.tar.gz for ARTIFACTS_
 	tar -czf /tmp/aether-artifacts.tar.gz \
 		data/metadata.sqlite \
 		data/splits.json \
+		data/processed/her_dataset.traj \
 		data/mace_features/train_emb.npz \
 		data/mace_features/val_emb.npz \
 		data/mace_features/test_emb.npz \
